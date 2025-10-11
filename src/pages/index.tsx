@@ -17,4 +17,6 @@ export { RetailersPage } from './Retailers/RetailersPage';
 export { RetailerDetailsPage } from './Retailers/RetailerDetailsPage';
 
 export { MyCartPage } from './Orders/MyCartPage';
+export { MyOrdersPage } from './Orders/MyOrdersPage';
+export { OrderDetailsPage } from './Orders/OrderDetailsPage';
 

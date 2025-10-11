@@ -3,7 +3,7 @@ import { Provider } from 'react-redux';
 import { store } from './store';
 import { ProtectedRoute } from './routes/ProtectedRoute';
 import { ThemeProvider } from './context/ContextProvider/ThemeProvider';
-import { DashboardPage, HomePage, LandingPage, LoginPage, SignupPage, NotFoundPage, ProductsPage, ProductDetailsPage, UserProfilePage, DistributorsPage, DistributorDetailsPage, RetailersPage, RetailerDetailsPage, MyCartPage } from './pages';
+import { DashboardPage, HomePage, LandingPage, LoginPage, SignupPage, NotFoundPage, ProductsPage, ProductDetailsPage, UserProfilePage, DistributorsPage, DistributorDetailsPage, RetailersPage, RetailerDetailsPage, MyCartPage, MyOrdersPage, OrderDetailsPage } from './pages';
 
 function AppContent() {
   
@@ -42,6 +42,8 @@ function AppContent() {
           <Route path="/retailers/:id" element={<RetailerDetailsPage />} />
 
           <Route path="/cart" element={<MyCartPage />} />
+          <Route path="/orders" element={<MyOrdersPage />} />
+          <Route path="/orders/:id" element={<OrderDetailsPage />} />
 
           {/* No Route */}
           <Route path="*" element={<NotFoundPage />} />

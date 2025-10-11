@@ -131,6 +131,22 @@ export function Sidebar({ isOpen = false, onClose, isMobile = false, setIsOpen }
               </li>
               <li>
                 <NavLink
+                  to="/orders"
+                  className={({ isActive }) => 
+                    `flex items-center gap-3 p-3 transition-colors ${
+                      isActive 
+                        ? `border-l-2 rounded-l-lg bg-[var(--primary)] font-bold ${theme === 'dark' ? 'text-white' : 'text-text'}`
+                        : `rounded-lg ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800' : 'text-text hover:bg-gray-100'}`
+                    }`
+                  }
+                  onClick={onClose}
+                >
+                  <i className="fi fi-br-computer h-5 w-5 text-text flex items-center justify-center" />
+                  {shouldShowText && <span className="truncate">Orders</span>}
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
                   to="/settings"
                   className={({ isActive }) => 
                     `flex items-center gap-3 p-3 transition-colors ${

@@ -20,6 +20,33 @@ export interface User {
   _id?: string;
   username: string;
   email: string;
+  userType: 'retailer' | 'distributor';
+  retailerDetails?: {
+    _id: string;
+    name: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    gstNumber?: string;
+    pincode?: string;
+    state?: string;
+    city?: string;
+    status: 'active' | 'inactive' | 'pending';
+  };
+  distributorDetails?: {
+    _id: string;
+    name: string;
+    address: string;
+    latitude: string;
+    longitude: string;
+    contactNumber: string;
+    email: string;
+    pincode: string;
+    state: string;
+    city: string;
+    gstNumber: string;
+    status: 'active' | 'inactive' | 'pending';
+  };
   firstName: string;
   lastName: string;
   avatar?: string;
@@ -103,6 +130,19 @@ export interface Order {
   status: string;
   createdAt: string;
   updatedAt: string;
+  userId: string;
+  username: string;
+  deliveryAddress: {
+    address: string;
+    city: string;
+    state: string;
+    pincode: string;
+  };
+  notes: string;
+  paymentMethod: string;
+  paymentStatus: string;
+  price: number;
+  quantity: number;
 }
 
 

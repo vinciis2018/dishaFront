@@ -2,80 +2,116 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SimpleLayout } from '../../layouts/AppLayout';
 import { useAppSelector } from '../../store';
+import type { User } from '../../types';
 
-const mockSubscription = {
-  plan: 'Pro',
-  status: 'active',
-  nextBillingDate: 'September 15, 2023',
-  usage: {
-    storage: {
-      used: 45.2,
-      total: 100,
-      unit: 'GB',
-    },
-    projects: {
-      used: 3,
-      total: 10,
-    },
-    teamMembers: {
-      used: 2,
-      total: 5,
-    },
-  },
-};
 
-const planLimits = {
-  Free: {
-    storage: 5,
-    projects: 3,
-    teamMembers: 1,
-  },
-  Pro: {
-    storage: 100,
-    projects: 10,
-    teamMembers: 5,
-  },
-  Enterprise: {
-    storage: 1000,
-    projects: 'Unlimited',
-    teamMembers: 'Unlimited',
-  },
-};
+const UserTypeDetails = ({ user }: { user: User | null }) => {
+  if (!user) return null;
 
-interface UsageMeterProps {
-  used: number;
-  total: number;
-  unit?: string;
-}
-
-const UsageMeter = ({ used, total, unit = '' }: UsageMeterProps) => {
-  const percentage = Math.min(100, Math.round((used / total) * 100));
-  
-  return (
-    <div className="mt-1">
-      <div className="flex justify-between text-sm mb-1">
-        <span className="text-[var(--text-muted)]">
-          {used.toFixed(1)} {unit} of {total} {unit}
-        </span>
-        <span className="font-medium">{percentage}%</span>
+  if (user.userType === 'retailer' && user.retailerDetails) {
+    const details = user.retailerDetails;
+    return (
+      <div className="mt-6">
+        <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Retailer Details</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <p className="text-sm text-gray-500">Business Name</p>
+            <p className="text-gray-900 dark:text-white">{details.name}</p>
+          </div>
+          {details.phone && (
+            <div>
+              <p className="text-sm text-gray-500">Phone</p>
+              <p className="text-gray-900 dark:text-white">{details.phone}</p>
+            </div>
+          )}
+          {details.gstNumber && (
+            <div>
+              <p className="text-sm text-gray-500">GST Number</p>
+              <p className="text-gray-900 dark:text-white">{details.gstNumber}</p>
+            </div>
+          )}
+          <div>
+            <p className="text-sm text-gray-500">Status</p>
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+              details.status === 'active' ? 'bg-green-100 text-green-800' :
+              details.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+              'bg-red-100 text-red-800'
+            }`}>
+              {details.status.charAt(0).toUpperCase() + details.status.slice(1)}
+            </span>
+          </div>
+        </div>
+        {(details.address || details.city || details.state || details.pincode) && (
+          <div className="mt-4">
+            <p className="text-sm text-gray-500">Address</p>
+            <p className="text-gray-900 dark:text-white">
+              {[details.address, details.city, details.state, details.pincode].filter(Boolean).join(', ')}
+            </p>
+          </div>
+        )}
       </div>
-      <div className="w-full bg-gray-200 rounded-full h-2">
-        <div 
-          className="bg-[var(--primary)] h-2 rounded-full" 
-          style={{ width: `${percentage}%` }}
-        />
+    );
+  }
+
+  if (user.userType === 'distributor' && user.distributorDetails) {
+    const details = user.distributorDetails;
+    return (
+      <div className="mt-6">
+        <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Distributor Details</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <p className="text-sm text-gray-500">Business Name</p>
+            <p className="text-gray-900 dark:text-white">{details.name}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Contact Number</p>
+            <p className="text-gray-900 dark:text-white">{details.contactNumber}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Email</p>
+            <p className="text-gray-900 dark:text-white">{details.email}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">GST Number</p>
+            <p className="text-gray-900 dark:text-white">{details.gstNumber}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Status</p>
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+              details.status === 'active' ? 'bg-green-100 text-green-800' :
+              details.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+              'bg-red-100 text-red-800'
+            }`}>
+              {details.status.charAt(0).toUpperCase() + details.status.slice(1)}
+            </span>
+          </div>
+        </div>
+        <div className="mt-4">
+          <p className="text-sm text-gray-500">Address</p>
+          <p className="text-gray-900 dark:text-white">
+            {[details.address, details.city, details.state, details.pincode].filter(Boolean).join(', ')}
+          </p>
+        </div>
+        <div className="mt-2">
+          <p className="text-sm text-gray-500">Location</p>
+          <p className="text-gray-900 dark:text-white">
+            Lat: {details.latitude}, Lng: {details.longitude}
+          </p>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  return null;
 };
 
 export function UserProfilePage() {
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
-  const { user } = useAppSelector((state)=> state.auth);
-console.log(user)
+  const { user } = useAppSelector((state) => state.auth);
+  
   const [formData, setFormData] = useState<{name: string, email: string}>({
-    name: user?.firstName || "",
+    name: user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : "",
     email: user?.email || "",
   });
 
@@ -93,10 +129,6 @@ console.log(user)
     setIsEditing(false);
   };
 
-  const handleUpgrade = () => {
-    // In a real app, this would navigate to a pricing/upgrade page
-    console.log('Upgrade plan');
-  };
 
   return (
     <SimpleLayout>
@@ -177,6 +209,19 @@ console.log(user)
                       </form>
                     ) : (
                       <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-sm text-gray-500">Full Name</p>
+                            <p className="text-gray-900 dark:text-white">
+                              {user?.firstName} {user?.lastName}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">Email</p>
+                            <p className="text-gray-900 dark:text-white">{user?.email}</p>
+                          </div>
+                        </div>
+                        <UserTypeDetails user={user} />
                         <div>
                           <p className="text-sm font-medium text-black dark:text-white">Name</p>
                           <p className="mt-1 text-sm text-black dark:text-white">{formData.name}</p>
@@ -232,161 +277,10 @@ console.log(user)
                     </div>
                   </div>
 
-                  {/* Subscription & Usage */}
-                  <div className="space-y-6">
-                    {/* Subscription Card */}
-                    <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg overflow-hidden">
-                      <div className="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
-                        <div className="flex justify-between items-center">
-                          <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
-                            Subscription
-                          </h3>
-                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            mockSubscription.status === 'active' 
-                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
-                              : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                          }`}>
-                            {mockSubscription.status.charAt(0).toUpperCase() + mockSubscription.status.slice(1)}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="px-4 py-5 sm:p-6">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                              {mockSubscription.plan} Plan
-                            </p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                              Next billing date: {mockSubscription.nextBillingDate}
-                            </p>
-                          </div>
-                          <button
-                            onClick={handleUpgrade}
-                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[var(--primary)] hover:bg-[var(--primary-hover)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary)]"
-                          >
-                            Upgrade Plan
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Usage Stats */}
-                    <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg overflow-hidden">
-                      <div className="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
-                        <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
-                          Usage
-                        </h3>
-                      </div>
-                      <div className="px-4 py-5 sm:p-6 space-y-6">
-                        <div>
-                          <div className="flex justify-between">
-                            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Storage</h4>
-                            <span className="text-sm text-gray-500 dark:text-gray-400">
-                              {mockSubscription.usage.storage.used} / {mockSubscription.usage.storage.total} {mockSubscription.usage.storage.unit}
-                            </span>
-                          </div>
-                          <UsageMeter 
-                            used={mockSubscription.usage.storage.used} 
-                            total={mockSubscription.usage.storage.total} 
-                            unit={mockSubscription.usage.storage.unit} 
-                          />
-                        </div>
-                        
-                        <div>
-                          <div className="flex justify-between">
-                            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Projects</h4>
-                            <span className="text-sm text-gray-500 dark:text-gray-400">
-                              {mockSubscription.usage.projects.used} / {mockSubscription.usage.projects.total}
-                            </span>
-                          </div>
-                          <UsageMeter 
-                            used={mockSubscription.usage.projects.used} 
-                            total={mockSubscription.usage.projects.total} 
-                          />
-                        </div>
-                        
-                        <div>
-                          <div className="flex justify-between">
-                            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Team Members</h4>
-                            <span className="text-sm text-gray-500 dark:text-gray-400">
-                              {mockSubscription.usage.teamMembers.used} / {mockSubscription.usage.teamMembers.total}
-                            </span>
-                          </div>
-                          <UsageMeter 
-                            used={mockSubscription.usage.teamMembers.used} 
-                            total={mockSubscription.usage.teamMembers.total} 
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
 
-              {/* Plan Comparison */}
-              <div className="lg:col-span-1">
-                <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg overflow-hidden">
-                  <div className="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
-                    <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
-                      Plan Comparison
-                    </h3>
-                  </div>
-                  <div className="px-4 py-5 sm:p-6">
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead>
-                          <tr>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Feature</th>
-                            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Free</th>
-                            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Pro</th>
-                            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Enterprise</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                          <tr>
-                            <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">Storage</td>
-                            <td className="px-4 py-3 text-center text-sm">{planLimits.Free.storage}GB</td>
-                            <td className="px-4 py-3 text-center text-sm bg-blue-50 dark:bg-blue-900/30">{planLimits.Pro.storage}GB</td>
-                            <td className="px-4 py-3 text-center text-sm">{planLimits.Enterprise.storage}GB</td>
-                          </tr>
-                          <tr>
-                            <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">Projects</td>
-                            <td className="px-4 py-3 text-center text-sm">{planLimits.Free.projects}</td>
-                            <td className="px-4 py-3 text-center text-sm bg-blue-50 dark:bg-blue-900/30">{planLimits.Pro.projects}</td>
-                            <td className="px-4 py-3 text-center text-sm">{planLimits.Enterprise.projects}</td>
-                          </tr>
-                          <tr>
-                            <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">Team Members</td>
-                            <td className="px-4 py-3 text-center text-sm">{planLimits.Free.teamMembers}</td>
-                            <td className="px-4 py-3 text-center text-sm bg-blue-50 dark:bg-blue-900/30">{planLimits.Pro.teamMembers}</td>
-                            <td className="px-4 py-3 text-center text-sm">{planLimits.Enterprise.teamMembers}</td>
-                          </tr>
-                          <tr>
-                            <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">Priority Support</td>
-                            <td className="px-4 py-3 text-center text-sm">✕</td>
-                            <td className="px-4 py-3 text-center text-sm bg-blue-50 dark:bg-blue-900/30">✓</td>
-                            <td className="px-4 py-3 text-center text-sm">✓</td>
-                          </tr>
-                          <tr>
-                            <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">API Access</td>
-                            <td className="px-4 py-3 text-center text-sm">Read Only</td>
-                            <td className="px-4 py-3 text-center text-sm bg-blue-50 dark:bg-blue-900/30">Full Access</td>
-                            <td className="px-4 py-3 text-center text-sm">Full Access</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                    <div className="mt-6 text-center">
-                      <button
-                        onClick={handleUpgrade}
-                        className="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[var(--primary)] hover:bg-[var(--primary-hover)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary)]"
-                      >
-                        Upgrade to Enterprise
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+
             </div>
           </div>
     </SimpleLayout>
