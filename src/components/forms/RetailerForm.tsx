@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import { getS3Url } from '../../utilities/awsUtils';
-import type { DistributorFormData, Product, User } from '../../types';
+import type { DistributorFormData, Product } from '../../types';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { getAllProducts } from '../../store/slices/productsSlice';
-import { getAllUsers } from '../../store/slices/usersSlice';
 
 interface DistributorFormProps {
   isOpen: boolean;
@@ -17,10 +16,8 @@ export function DistributorForm({ isOpen, onClose, onSubmit, isLoading, initialD
   const dispatch = useAppDispatch();
   
   const { products } = useAppSelector((state) => state.products);
-  const { users } = useAppSelector((state) => state.users);
-
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
-  const [selectedOwner, setSelectedOwner] = useState<User | null>(null);
+  
   const defaultFormData: DistributorFormData = {
     name: '',
     images: [],
@@ -33,7 +30,6 @@ export function DistributorForm({ isOpen, onClose, onSubmit, isLoading, initialD
     zipCode: '',
     products: [],
     ordersRecieved: [],
-    owner: null
   }
 
   const [formData, setFormData] = useState<DistributorFormData>(() => ({
@@ -188,7 +184,7 @@ export function DistributorForm({ isOpen, onClose, onSubmit, isLoading, initialD
     setSelectedProducts(prev => prev.filter(product => product._id !== productId));
   };
 
-  const handleProductSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleSiteSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const productId = e.target.value;
     const product = products.find(d => d._id === productId);
     console.log(product);
@@ -204,21 +200,6 @@ export function DistributorForm({ isOpen, onClose, onSubmit, isLoading, initialD
     }
   };
 
-  const handleUserSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const userId = e.target.value;
-    const user = users.find(d => d._id === userId);
-    console.log(user);
-    if (user && !formData.owner) {
-
-      setFormData(prev => ({
-        ...prev,
-        owner: user
-      }));
-
-      // Update selectedProducts for display
-      setSelectedOwner(user);
-    }
-  };
 
   useEffect(() => {
     if (initialData) {
@@ -232,9 +213,8 @@ export function DistributorForm({ isOpen, onClose, onSubmit, isLoading, initialD
       setSelectedProducts([]);
     }
     dispatch(getAllProducts());
-    dispatch(getAllUsers());
-  }, [dispatch, initialData]);
-  
+  }, [initialData]);
+
   if (!isOpen) return null;
 
   return (
@@ -450,7 +430,7 @@ export function DistributorForm({ isOpen, onClose, onSubmit, isLoading, initialD
 
                 <div>
                   <label htmlFor="sites" className="block text-sm font-medium text-[var(--text-muted)] mb-1">
-                    Products *
+                    Sites *
                   </label>
                   <div className="space-y-2">
                     <select
@@ -458,11 +438,11 @@ export function DistributorForm({ isOpen, onClose, onSubmit, isLoading, initialD
                       id="sites"
                       name="sites"
                       value=""
-                      onChange={handleProductSelect}
+                      onChange={handleSiteSelect}
                       className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent bg-[var(--background-alt)] text-[var(--text)]"
                       disabled={isLoading}
                     >
-                      <option value="">Select a product</option>
+                      <option value="">Select a site</option>
                       {products.map((product, index) => (
                         <option key={index} value={product._id}>
                           {product.name}
@@ -493,48 +473,6 @@ export function DistributorForm({ isOpen, onClose, onSubmit, isLoading, initialD
                   </div>
                 </div>
 
-                <div>
-                  <label htmlFor="sites" className="block text-sm font-medium text-[var(--text-muted)] mb-1">
-                    Owner *
-                  </label>
-                  <div className="space-y-2">
-                    <select
-                      title="Select a site"
-                      id="sites"
-                      name="sites"
-                      value=""
-                      onChange={handleUserSelect}
-                      className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent bg-[var(--background-alt)] text-[var(--text)]"
-                      disabled={isLoading}
-                    >
-                      <option value="">Select a owner</option>
-                      {users.map((user, index) => (
-                        <option key={index} value={user._id}>
-                          {user.username}
-                        </option>
-                      ))}
-                    </select>
-                    
-                    {selectedOwner !== null && (
-                      <div className="mt-2">
-                        <p className="text-sm text-[var(--text-muted)] mb-1">Selected Owner:</p>
-                        <div className="flex flex-wrap gap-2">
-                          <span key={selectedOwner._id} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[var(--primary)] text-[var(--text)]">
-                            {selectedOwner.username}
-                            <button 
-                              type="button"
-                              onClick={() => setSelectedOwner(null)}
-                              className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30"
-                              aria-label={`Remove ${selectedOwner.username}`}
-                            >
-                              ×
-                            </button>
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
               </div>
             </form>
           </div>

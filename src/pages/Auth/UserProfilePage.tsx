@@ -8,7 +8,7 @@ import type { User } from '../../types';
 const UserTypeDetails = ({ user }: { user: User | null }) => {
   if (!user) return null;
 
-  if (user.userType === 'retailer' && user.retailerDetails) {
+  if (user.role === 'retailer' && user.retailerDetails) {
     const details = user.retailerDetails;
     return (
       <div className="mt-6">
@@ -53,7 +53,7 @@ const UserTypeDetails = ({ user }: { user: User | null }) => {
     );
   }
 
-  if (user.userType === 'distributor' && user.distributorDetails) {
+  if (user.role === 'distributor' && user.distributorDetails) {
     const details = user.distributorDetails;
     return (
       <div className="mt-6">
@@ -220,24 +220,33 @@ export function UserProfilePage() {
                             <p className="text-sm text-gray-500">Email</p>
                             <p className="text-gray-900 dark:text-white">{user?.email}</p>
                           </div>
+                          <div>
+                            <p className="text-sm text-gray-500">User Type</p>
+                            <p className="text-gray-900 dark:text-white">{user?.role}</p>
+                          </div>
                         </div>
-                        <UserTypeDetails user={user} />
-                        <div>
-                          <p className="text-sm font-medium text-black dark:text-white">Name</p>
-                          <p className="mt-1 text-sm text-black dark:text-white">{formData.name}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-black dark:text-white">Email</p>
-                          <p className="mt-1 text-sm text-black dark:text-white">{formData.email}</p>
-                        </div>
-                        <div className="pt-2">
-                          <button
-                            onClick={() => setIsEditing(true)}
-                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[var(--primary)] hover:bg-[var(--primary-hover)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary)]"
-                          >
-                            Edit Profile
-                          </button>
-                        </div>
+                        {user?.role && ["retailer","distributor"].includes(user?.role) && (
+                          <div>
+                            <UserTypeDetails user={user} />
+                            <div>
+                              <p className="text-sm font-medium text-black dark:text-white">Name</p>
+                              <p className="mt-1 text-sm text-black dark:text-white">{formData.name}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-black dark:text-white">Email</p>
+                              <p className="mt-1 text-sm text-black dark:text-white">{formData.email}</p>
+                            </div>
+                            <div className="pt-2">
+                              <button
+                                onClick={() => setIsEditing(true)}
+                                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[var(--primary)] hover:bg-[var(--primary-hover)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary)]"
+                              >
+                                Edit Profile
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                        
                       </div>
                     )}
                   </div>

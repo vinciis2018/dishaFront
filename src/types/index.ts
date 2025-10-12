@@ -20,7 +20,7 @@ export interface User {
   _id?: string;
   username: string;
   email: string;
-  userType: 'retailer' | 'distributor';
+  role: 'retailer' | 'distributor' | 'admin' | 'default';
   retailerDetails?: {
     _id: string;
     name: string;
@@ -182,6 +182,7 @@ export interface DistributorFormData {
   pan?: string;
   phone?: string;
   email?: string;
+  owner?: User | null;
 }
 
 
