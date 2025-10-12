@@ -224,12 +224,15 @@ export function DistributorForm({ isOpen, onClose, onSubmit, isLoading, initialD
     if (initialData) {
       setFormData(initialData);
       setSelectedProducts(products.filter(p => initialData?.products?.some(product => product._id === p._id)));
+      // serSelectedOwner(initialData.owner);
+
     } else {
       setFormData(prev => ({
         ...prev,
         products: []
       }));
       setSelectedProducts([]);
+      setSelectedOwner(null);
     }
     dispatch(getAllProducts());
     dispatch(getAllUsers());
