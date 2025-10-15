@@ -6,9 +6,10 @@ import { useDeviceType } from '../hooks/useDevice';
 
 interface FullLayoutProps {
   children: React.ReactNode;
+  footer?: React.ReactNode | null;
 }
 
-export function FullLayout({ children }: FullLayoutProps) {
+export function FullLayout({ children, footer = null }: FullLayoutProps) {
   const { isMobile } = useDeviceType();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -41,16 +42,19 @@ export function FullLayout({ children }: FullLayoutProps) {
       </div>
 
       {/* Footer */}
-      <Footer />
+      <Footer className="">
+        {footer}
+      </Footer>
     </div>
   );
 }
 
 interface SimpleLayoutProps {
   children: React.ReactNode;
+  footer?: React.ReactNode | null;
 }
 
-export function SimpleLayout({ children }: SimpleLayoutProps) {
+export function SimpleLayout({ children, footer = null }: SimpleLayoutProps) {
   const { isMobile } = useDeviceType();
 
   return (
@@ -73,7 +77,9 @@ export function SimpleLayout({ children }: SimpleLayoutProps) {
         </div>
       </div>
       {/* Footer */}
-      <Footer />
+      <Footer className="bg-white">
+        {footer}
+      </Footer>
     </div>
   );
 }

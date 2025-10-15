@@ -50,6 +50,7 @@ module.exports = {
         orange1: 'var(--orange)',
         orange2: 'var(--orange2)',
         green1: 'var(--green)',
+        green2: 'var(--green2)',
         blue1: 'var(--blue)',
         navyBlue: 'var(--navy-blue)',
         violetLight: 'var(--violet-light)',

@@ -3,7 +3,7 @@ import { Provider } from 'react-redux';
 import { store } from './store';
 import { ProtectedRoute } from './routes/ProtectedRoute';
 import { ThemeProvider } from './context/ContextProvider/ThemeProvider';
-import { DashboardPage, HomePage, LandingPage, LoginPage, SignupPage, NotFoundPage, ProductsPage, ProductDetailsPage, UserProfilePage, DistributorsPage, DistributorDetailsPage, RetailersPage, RetailerDetailsPage, MyCartPage, MyOrdersPage, OrderDetailsPage } from './pages';
+import { DashboardPage, HomePage, LoginPage, SignupPage, NotFoundPage, ProductsPage, ProductDetailsPage, UserProfilePage, DistributorsPage, DistributorDetailsPage, RetailersPage, RetailerDetailsPage, MyCartPage, MyOrdersPage, OrderDetailsPage } from './pages';
 
 function AppContent() {
   
@@ -20,7 +20,7 @@ function AppContent() {
           <Route path="/landing" element={<HomePage />} />
 
           {/* Public Route */}
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={<ProductsPage />} />
 
           {/* Protected Route */}
           <Route

@@ -1,7 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { FullLayout } from '../../layouts/AppLayout';
 import { useAppDispatch, useAppSelector } from '../../store';
-import { ArrowLeftIcon, DocumentTextIcon, PencilIcon } from '@heroicons/react/24/outline';
 import { useEffect, useState } from 'react';
 import { getProductDetails, updateProduct } from '../../store/slices/productsSlice';
 import { ProductForm } from '../../components/forms/ProductForm';
@@ -72,7 +71,7 @@ export function ProductDetailsPage() {
               title="Edit product details"
               aria-label="Edit product details"
             >
-              <PencilIcon className="h-5 w-5" />
+              <i className="fi fi-sr-pencil h-5 w-5" />
             </button>
           </div>
           <ProductForm
@@ -119,7 +118,7 @@ export function ProductDetailsPage() {
     return (
       <FullLayout>
         <div className="text-center py-12">
-          <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400" />
+          <i className="fi fi-sr-document-text mx-auto h-12 w-12 text-gray-400" />
           <h3 className="mt-2 text-lg font-medium text-gray-900 dark:text-white">No product found</h3>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">The requested product could not be found.</p>
           <div className="mt-6">
@@ -127,7 +126,7 @@ export function ProductDetailsPage() {
               onClick={() => navigate(-1)}
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
-              <ArrowLeftIcon className="-ml-1 mr-2 h-4 w-4" />
+              <i className="fi fi-sr-arrow-left -ml-1 mr-2 h-4 w-4" />
               Back to Products
             </button>
           </div>
@@ -141,8 +140,44 @@ export function ProductDetailsPage() {
     manufacturer, unitQuantity, availability, minOrderQuantity 
   } = product;
   
+  const Footer = () => {
+    return (
+      <div className="flex justify-between items-center p-4 bg-white rounded-t-2xl">
+        <div className="">
+          {/* Add quantity */}
+          <div className="flex items-center space-x-2">
+            <button
+              type="button"
+              className="px-2 py-1 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              onClick={() => {}}
+            >
+              -
+            </button>
+            <span className="text-sm font-medium text-gray-900">1</span>
+            <button
+              type="button"
+              className="px-2 py-1 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              onClick={() => {}}
+            >
+              +
+            </button>
+          </div>
+        </div>
+        <div className="flex items-center space-x-3">
+          <button
+            type="button"
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            onClick={handleAddToCart}
+          >
+            Add To Cart
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <FullLayout>
+    <FullLayout footer={Footer()}>
       <div className="max-w-7xl mx-auto">
         <div className="px-4 py-2 bg-white">
           <div className="flex flex-row items-center justify-between gap-4">
@@ -150,23 +185,26 @@ export function ProductDetailsPage() {
               onClick={() => navigate(-1)}
               className="flex items-center text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
             >
-              <i className="fi fi-rr-arrow-left h-4 w-4 mr-1" />
-              Product Details
+              <span className="rounded-full bg-gray-100 p-2 mr-1">
+                <i className="fi fi-rr-arrow-left flex items-center" />
+              </span>
+              <span className="text-lg font-semibold">
+                Product Details
+              </span>
             </button>
             
             <div className="flex gap-2 items-center">
-              <span className="rounded-full bg-gray-200 p-2 cursor-pointer">
-                <i className="fi fi-sr-shopping-bag h-4 w-4 flex items-center" />
+              <span className="rounded-full bg-gray-100 p-2 cursor-pointer">
+                <i className="fi fi-sr-shopping-bag text-gray-500 flex items-center" />
               </span>
-              <span className="rounded-full bg-gray-200 p-2 cursor-pointer" onClick={() => setIsEditMode(true)}>
-                <i className="fi fi-sr-edit h-4 w-4 flex items-center" />
+              <span className="rounded-full bg-gray-100 p-2 cursor-pointer" onClick={() => setIsEditMode(true)}>
+                <i className="fi fi-sr-edit text-gray-500 flex items-center" />
               </span>
             </div>
-            
           </div>
         </div>
 
-        <div className="overflow-hidden sm:rounded-lg py-2">
+        <div className="h-screen overflow-y-auto py-2">
           {/* Main Content */}
           <div className="bg-white">
             <div className="">
@@ -188,64 +226,32 @@ export function ProductDetailsPage() {
                 <p className="text-xs font-semibold text-gray-800">Description</p>
                 <p className="text-xs text-gray-500 ">{product.description}</p>
               </div>
-
-              <div>
-                {/* Location Details */}
-                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-3">
-                    Manufacturer
-                  </h3>
-                  <div className="space-y-3">
-                    {manufacturer}
+              <div className="py-1 space-y-1">
+                <p className="text-xs font-semibold text-gray-800">Manufacturer</p>
+                <p className="text-xs text-gray-500 ">{manufacturer}</p>
+              </div>
+              <div className="py-1 space-y-1">
+                <p className="text-xs font-semibold text-gray-800">Stocks</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="col-span-1 py-1 space-y-1">
+                    <p className="text-xs font-semibold text-gray-800">Available</p>
+                    <p className="text-xs text-gray-500 ">{unitQuantity}</p>
                   </div>
-                </div>
-
-                {/* Product Information */}
-                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-3">
-                    Availability
-                  </h3>
-                  <div className="space-y-3">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {availability ? "Available" : "Not Available"}
-                      </p>
-                  </div>
-                </div>
-
-                {/* Coordinates */}
-                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-3">
-                    Stocks
-                  </h3>
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Available</p>
-                      <p className="text-sm text-gray-900 dark:text-white">
-                        {unitQuantity}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Min Order Quantity</p>
-                      <p className="text-sm text-gray-900 dark:text-white">
-                        {minOrderQuantity}
-                      </p>
-                    </div>
+                  <div className="col-span-1 py-1 space-y-1">
+                    <p className="text-xs font-semibold text-gray-800">Min. Order Quantity</p>
+                    <p className="text-xs text-gray-500 ">{minOrderQuantity}</p>
                   </div>
                 </div>
               </div>
-
+              <div className="py-1 space-y-1">
+                <p className="text-xs font-semibold text-gray-800">Availability</p>
+                <div className="space-y-3">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      {availability ? "Available" : "Not Available"}
+                    </p>
+                </div>
+              </div>
             </div>
-
-            <div className="flex items-center space-x-3">
-              <button
-                type="button"
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                onClick={handleAddToCart}
-              >
-                Add To Cart
-              </button>
-            </div>
-
           </div>
         </div>
       </div>

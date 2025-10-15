@@ -85,19 +85,42 @@ export function ProductsPage() {
     dispatch(getAllProducts({ page: currentPage, limit: itemsPerPage, search: searchTerm }));
   }, [dispatch, currentPage, itemsPerPage, searchTerm]);
 
+
+  const Footer = () => {
+    return (
+      <div className="bg-green2 flex justify-between items-center p-4 rounded-t-2xl">
+        <div className="">
+          <p className="text-xs font-semibold text-white">Total Amount</p>
+          <p className="text-lg font-semibold text-white">₹ 12000.00</p>
+          <p className="text-xs text-gray-200">12 Products added to cart</p>
+        </div>
+        <div className="flex items-center space-x-3">
+          <button
+            type="button"
+            className="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-transparent rounded-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            // onClick={handleAddToCart}
+          >
+            Checkout
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+
   return (
-    <FullLayout>
+    <FullLayout footer={Footer()}>
       <div className="h-auto">
         <div className="bg-white px-4 py-2">
           <div className="sm:flex sm:items-center">
             <div className="sm:flex-auto flex items-center justify-between">
               <h1 className="text-xl font-semibold text-[var(--text-primary)]">Products</h1>
               <div className="flex gap-2 items-center">
-                <span className="rounded-full bg-gray-200 p-2 cursor-pointer">
-                  <i className="fi fi-sr-shopping-bag h-4 w-4 flex items-center" />
+                <span className="rounded-full bg-gray-100 p-2 cursor-pointer">
+                  <i className="fi fi-sr-shopping-bag text-gray-500 flex items-center" />
                 </span>
-                <span className="rounded-full bg-gray-200 p-2 cursor-pointer" onClick={() => setIsFormOpen(true)}>
-                  <i className="fi fi-sr-plus h-4 w-4 flex items-center" />
+                <span className="rounded-full bg-gray-100 p-2 cursor-pointer" onClick={() => setIsFormOpen(true)}>
+                  <i className="fi fi-sr-plus text-gray-500 flex items-center" />
                 </span>
               </div>
             </div>
