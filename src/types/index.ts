@@ -79,6 +79,10 @@ export interface Product {
   unitQuantity: number;
   availability: boolean;
   minOrderQuantity: number;
+  mrp?: number;
+  ptr?: number;
+  packSize?: string;
+  description?: string;
 }
 
 
@@ -90,6 +94,10 @@ export interface ProductFormData {
   unitQuantity: number;
   availability: boolean;
   minOrderQuantity: number;
+  mrp?: number;
+  ptr?: number;
+  packSize?: string;
+  description?: string;
 }
 
 export interface Retailer {

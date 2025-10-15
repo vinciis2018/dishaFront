@@ -22,7 +22,7 @@ export function FullLayout({ children }: FullLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--background)] text-[var(--text)] flex flex-col">
+    <div className="min-h-screen bg-gray-100 text-[var(--text)] flex flex-col">
       {/* Fixed Header */}
       <Header onMenuClick={toggleSidebar} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} isMobile={isMobile} />
       
@@ -33,7 +33,7 @@ export function FullLayout({ children }: FullLayoutProps) {
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Scrollable Content */}
           <main className="flex-1 overflow-y-auto">
-            <div className="min-h-* mr-2 pt-8">
+            <div className="min-h-* pt-8">
               {children}
             </div>
           </main>

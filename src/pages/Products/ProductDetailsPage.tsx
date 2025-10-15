@@ -143,102 +143,109 @@ export function ProductDetailsPage() {
   
   return (
     <FullLayout>
-      <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
-          >
-            <ArrowLeftIcon className="h-4 w-4 mr-1" />
-            Back to Products
-          </button>
-          
-          <div className="flex items-center space-x-3">
+      <div className="max-w-7xl mx-auto">
+        <div className="px-4 py-2 bg-white">
+          <div className="flex flex-row items-center justify-between gap-4">
             <button
-              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              onClick={() => setIsEditMode(true)}
-              type="button"
+              onClick={() => navigate(-1)}
+              className="flex items-center text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
             >
-              Edit Product
+              <i className="fi fi-rr-arrow-left h-4 w-4 mr-1" />
+              Product Details
             </button>
-            <button
-              type="button"
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              onClick={handleAddToCart}
-            >
-              Add To Cart
-            </button>
+            
+            <div className="flex gap-2 items-center">
+              <span className="rounded-full bg-gray-200 p-2 cursor-pointer">
+                <i className="fi fi-sr-shopping-bag h-4 w-4 flex items-center" />
+              </span>
+              <span className="rounded-full bg-gray-200 p-2 cursor-pointer" onClick={() => setIsEditMode(true)}>
+                <i className="fi fi-sr-edit h-4 w-4 flex items-center" />
+              </span>
+            </div>
+            
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg">
+        <div className="overflow-hidden sm:rounded-lg py-2">
           {/* Main Content */}
-          <div className="px-6 py-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {/* Left Column - Campaign Info */}
-              <div className="md:col-span-2 space-y-8">
-                <div className="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-center space-x-3">
-                      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                        {name}
-                      </h1>
-                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{formula}</p>
-                    </div>
+          <div className="bg-white">
+            <div className="">
+              <img src={product.images[0]} alt="product" />
+            </div>
+            <div className="px-4">
+              <div className="">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {name}
+                </h1>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{formula}</p>
+              </div>
+              <div className="flex items-center gap-2 py-1">
+                <p className="text-md font-semibold text-violet">PTR ₹ {product.ptr}</p>
+                <p className="text-sm text-gray-500">MRP ₹ {product.mrp}</p>
+              </div>
+              <div className="py-1 space-y-1">
+                <p className="text-xs text-gray-500">Pack Size</p>
+                <p className="text-xs font-semibold text-gray-800">Description</p>
+                <p className="text-xs text-gray-500 ">{product.description}</p>
+              </div>
+
+              <div>
+                {/* Location Details */}
+                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-3">
+                    Manufacturer
+                  </h3>
+                  <div className="space-y-3">
+                    {manufacturer}
                   </div>
                 </div>
 
-                <div className="px-4 py-5 sm:p-6">
-                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    {/* Location Details */}
-                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-3">
-                        Manufacturer
-                      </h3>
-                      <div className="space-y-3">
-                        {manufacturer}
-                      </div>
-                    </div>
+                {/* Product Information */}
+                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-3">
+                    Availability
+                  </h3>
+                  <div className="space-y-3">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {availability ? "Available" : "Not Available"}
+                      </p>
+                  </div>
+                </div>
 
-                    {/* Product Information */}
-                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-3">
-                        Availability
-                      </h3>
-                      <div className="space-y-3">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white">
-                            {availability ? "Available" : "Not Available"}
-                          </p>
-                      </div>
+                {/* Coordinates */}
+                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-3">
+                    Stocks
+                  </h3>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Available</p>
+                      <p className="text-sm text-gray-900 dark:text-white">
+                        {unitQuantity}
+                      </p>
                     </div>
-
-                    {/* Coordinates */}
-                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-3">
-                        Stocks
-                      </h3>
-                      <div className="space-y-3">
-                        <div>
-                          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Available</p>
-                          <p className="text-sm text-gray-900 dark:text-white">
-                            {unitQuantity}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Min Order Quantity</p>
-                          <p className="text-sm text-gray-900 dark:text-white">
-                            {minOrderQuantity}
-                          </p>
-                        </div>
-                      </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Min Order Quantity</p>
+                      <p className="text-sm text-gray-900 dark:text-white">
+                        {minOrderQuantity}
+                      </p>
                     </div>
                   </div>
-
-                  {/* Product Images */}
-                  
                 </div>
               </div>
+
             </div>
+
+            <div className="flex items-center space-x-3">
+              <button
+                type="button"
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                onClick={handleAddToCart}
+              >
+                Add To Cart
+              </button>
+            </div>
+
           </div>
         </div>
       </div>

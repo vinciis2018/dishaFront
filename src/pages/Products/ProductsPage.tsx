@@ -87,58 +87,75 @@ export function ProductsPage() {
 
   return (
     <FullLayout>
-      <div className="p-4 bg-[var(--background-alt)]">
-        <div className="sm:flex sm:items-center">
-          <div className="sm:flex-auto">
-            <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Products</h1>
-            <p className="mt-2 text-sm text-[var(--text-secondary)]">
-              A list of all the products in your account including their name, location, and type.
-            </p>
+      <div className="h-auto">
+        <div className="bg-white px-4 py-2">
+          <div className="sm:flex sm:items-center">
+            <div className="sm:flex-auto flex items-center justify-between">
+              <h1 className="text-xl font-semibold text-[var(--text-primary)]">Products</h1>
+              <div className="flex gap-2 items-center">
+                <span className="rounded-full bg-gray-200 p-2 cursor-pointer">
+                  <i className="fi fi-sr-shopping-bag h-4 w-4 flex items-center" />
+                </span>
+                <span className="rounded-full bg-gray-200 p-2 cursor-pointer" onClick={() => setIsFormOpen(true)}>
+                  <i className="fi fi-sr-plus h-4 w-4 flex items-center" />
+                </span>
+              </div>
+            </div>
           </div>
-          <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+
+          {/* Search and filter */}
+          <div className="my-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="relative flex-1 max-w-md">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i className="fi fi-rr-search h-4 w-4 flex items-center text-[var(--text-secondary)]" aria-hidden="true" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search products..."
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  className="block w-full pl-10 pr-10 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-secondary)] text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent sm:text-sm"
+                />
+                {searchTerm && (
+                  <button
+                    title="Clear search"
+                    type="button"
+                    onClick={() => {
+                      setSearchTerm('');
+                      setCurrentPage(1);
+                      dispatch(getAllProducts({ page: 1, limit: itemsPerPage }));
+                    }}
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                  >
+                    <i className="fi fi-rr-xmark h-4 w-4 flex items-center text-[var(--text-secondary)]" aria-hidden="true" />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => setIsFormOpen(true)}
-              className="inline-flex items-center justify-center gap-2 rounded-md border border-transparent bg-violet px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)]"
+              onClick={() => {}}
+              className="inline-flex items-center justify-center gap-1 rounded-xl border border-gray-200 bg-transparent px-2 py-2 text-sm font-medium text-[var(--text-primary)] shadow-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)]"
             >
-              <i className="fi fi-rr-plus h-4 w-4 flex items-center" />
-              Add product
+              All
+              <i className="fi fi-rr-angle-small-down h-4 w-4 flex items-center" />
+            </button>
+            <button
+              type="button"
+              onClick={() => {}}
+              className="inline-flex items-center justify-center gap-1 rounded-xl border border-gray-200 bg-transparent px-2 py-2 text-sm font-medium text-[var(--text-primary)] shadow-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)]"
+            >
+              Category
+              <i className="fi fi-rr-angle-small-down h-4 w-4 flex items-center" />
             </button>
           </div>
         </div>
 
-        {/* Search and filter */}
-        <div className="mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="relative flex-1 max-w-md">
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <i className="fi fi-rr-search h-4 w-4 flex items-center text-[var(--text-secondary)]" aria-hidden="true" />
-              </div>
-              <input
-                type="text"
-                placeholder="Search products..."
-                value={searchTerm}
-                onChange={handleSearchChange}
-                className="block w-full pl-10 pr-10 py-2 border border-[var(--border-color)] rounded-md bg-[var(--bg-secondary)] text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent sm:text-sm"
-              />
-              {searchTerm && (
-                <button
-                  title="Clear search"
-                  type="button"
-                  onClick={() => {
-                    setSearchTerm('');
-                    setCurrentPage(1);
-                    dispatch(getAllProducts({ page: 1, limit: itemsPerPage }));
-                  }}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-                >
-                  <i className="fi fi-rr-xmark h-4 w-4 flex items-center text-[var(--text-secondary)]" aria-hidden="true" />
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
+              
         {/* Products list */}
         {status === 'loading' ? (
           <div className="mt-8 flex justify-center">
@@ -192,44 +209,46 @@ export function ProductsPage() {
             </div>
           </div>
         ) : (
-          <div className="mt-8">
+          <div className="p-2">
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {products.map((product) => (
                 <div
                   key={product._id}
                   onClick={() => navigate(`/products/${product._id}`)}
-                  className="bg-[var(--bg-secondary)] overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-200 cursor-pointer border border-[var(--border-color)]"
+                  className="bg-white overflow-hidden shadow rounded-2xl hover:shadow-md transition-shadow duration-200 cursor-pointer border border-[var(--border-color)]"
                 >
-                  <div className="p-5">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 bg-[var(--color-primary)] rounded-md p-3">
-                        <svg
-                          className="h-6 w-6 text-white"
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                          />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                          />
-                        </svg>
+                  <div className="p-4 flex gap-2 justify-between h-full">
+                    <div className="">
+                      <div className="truncate pb-1">
+                        <h3 className="text-md font-semibold text-[var(--text-primary)]">{product.name}</h3>
+                        <p className="text-xs text-gray-500 truncate">{product.formula}</p>
                       </div>
-                      <div className="ml-4">
-                        <h3 className="text-lg font-medium text-[var(--text-primary)]">{product.name}</h3>
-                        <p className="text-sm text-[var(--text-secondary)]">{product.formula}</p>
+                      <div className="flex items-center gap-2 py-1">
+                        <div className='border rounded-full p-2 flex items-center gap-2'>
+                          <p className="text-xs text-gray-500">Pack Size</p>
+                          <i className="fi fi-rr-angle-small-down h-4 w-4 flex items-center" />
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 pt-1">
+                        <p className="text-md font-semibold text-violet">PTR ₹ {product.ptr}</p>
+                        <p className="text-sm text-gray-500">MRP ₹ {product.mrp}</p>
                       </div>
                     </div>
-                    
+                    <div className="h-full">
+                      <div className="h-4/5 flex items-center bg-gray-200 rounded-xl ">
+                        <img className="h-full rounded-md" src={product.images[0]} alt="product" />
+                      </div>
+                      <div className="-mt-4 mx-2">
+                        <button
+                          type="button"
+                          className="w-full rounded-full flex items-center justify-center bg-violet text-white font-semibold p-2"
+                          onClick={() => {}}
+                        >
+                          Add
+                        </button>
+                      </div>
+                    </div>
+                      
                   </div>
                 </div>
               ))}

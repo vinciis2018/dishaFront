@@ -19,6 +19,10 @@ export function ProductForm({ isOpen, onClose, onSubmit, isLoading, initialData 
     unitQuantity: 10,
     availability: true,
     minOrderQuantity: 10,
+    mrp: 0,
+    ptr: 0,
+    packSize: '10*1*1',
+    description: '',
   }
 
   const [formData, setFormData] = useState<ProductFormData>(() => ({
