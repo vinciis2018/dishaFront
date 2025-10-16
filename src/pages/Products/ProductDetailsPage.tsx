@@ -11,9 +11,17 @@ export function ProductDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+
+  const [productQuantity, setProductQuantity] = useState(1);
+
   const { product, status } = useAppSelector((state) => state.products);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [cart, setCart] = useState(() => {
+    return JSON.parse(localStorage.getItem('cart') || '{}');
+  });
+
+  const { user } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
     if (id) {
@@ -48,13 +56,18 @@ export function ProductDetailsPage() {
   const handleAddToCart = () => {
     const cart = JSON.parse(localStorage.getItem('cart') || '{}');
     const cartItemIds = Object.keys(cart);
-    console.log(cartItemIds);
-    console.log(product?._id)
-    if (product && !cartItemIds.includes(product?._id)) {
-      cart[product?._id] = product;
-      localStorage.setItem('cart', JSON.stringify(cart));
+    if (product) {
+      if (!cartItemIds.includes(product._id) || productQuantity !== product.unitQuantity) {
+        const productToAdd = {...product, orderQuantity: productQuantity};
+        console.log(productToAdd);
+        cart[productToAdd?._id] = productToAdd;
+        localStorage.setItem('cart', JSON.stringify(cart));
+      } else {
+        alert('Product already added to cart');
+        navigate("/cart");
+      }
     }
-      
+    setCart(JSON.parse(localStorage.getItem('cart') || '{}'));
     alert('Product added to cart');
   };
 
@@ -143,33 +156,37 @@ export function ProductDetailsPage() {
   const Footer = () => {
     return (
       <div className="flex justify-between items-center p-4 bg-white rounded-t-2xl">
-        <div className="">
+        <div className="w-1/3">
           {/* Add quantity */}
-          <div className="flex items-center space-x-2">
-            <button
-              type="button"
-              className="px-2 py-1 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              onClick={() => {}}
-            >
-              -
-            </button>
-            <span className="text-sm font-medium text-gray-900">1</span>
-            <button
-              type="button"
-              className="px-2 py-1 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              onClick={() => {}}
-            >
-              +
-            </button>
+          <div className="bg-violet rounded-full p-2">
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                className="h-5 w-5 text-sm font-bold text-violet flex items-center justify-center bg-white border border-transparent rounded-full shadow-sm hover:bg-white focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-violet"
+                onClick={() => setProductQuantity(productQuantity - 1)}
+                disabled={productQuantity === 1}
+              >
+                -
+              </button>
+              <span className="text-sm font-bold text-white">{productQuantity}</span>
+              <button
+                type="button"
+                className="h-5 w-5 text-sm font-bold text-violet flex items-center justify-center bg-white border border-transparent rounded-full shadow-sm hover:bg-white focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-violet"
+                onClick={() => setProductQuantity(productQuantity + 1)}
+                disabled={productQuantity === unitQuantity}
+              >
+                +
+              </button>
+            </div>
           </div>
         </div>
         <div className="flex items-center space-x-3">
           <button
             type="button"
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="px-4 py-2 text-sm font-medium text-white bg-violet border border-transparent rounded-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             onClick={handleAddToCart}
           >
-            Add To Cart
+            {Object.keys(cart).includes(product._id) && cart[product._id].orderQuantity == productQuantity ? "Checkout" : "Add To Cart"}
           </button>
         </div>
       </div>
@@ -194,12 +211,17 @@ export function ProductDetailsPage() {
             </button>
             
             <div className="flex gap-2 items-center">
-              <span className="rounded-full bg-gray-100 p-2 cursor-pointer">
+              <span className="relative rounded-full bg-gray-100 p-2 cursor-pointer" onClick={() => navigate("/cart")}>
+                {Object.keys(cart)?.length > 0 && (
+                  <div className="h-4 w-4 absolute -top-1 -right-1 bg-green2 rounded-full text-xs text-white flex items-center justify-center">{Object.keys(cart)?.length}</div>
+                )}
                 <i className="fi fi-sr-shopping-bag text-gray-500 flex items-center" />
               </span>
-              <span className="rounded-full bg-gray-100 p-2 cursor-pointer" onClick={() => setIsEditMode(true)}>
-                <i className="fi fi-sr-edit text-gray-500 flex items-center" />
-              </span>
+              {user?.role === "admin" && (
+                <span className="rounded-full bg-gray-100 p-2 cursor-pointer" onClick={() => setIsEditMode(true)}>
+                  <i className="fi fi-sr-edit text-gray-500 flex items-center" />
+                  </span>
+              )}
             </div>
           </div>
         </div>

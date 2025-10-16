@@ -83,6 +83,7 @@ export interface Product {
   ptr?: number;
   packSize?: string;
   description?: string;
+  orderQuantity?: number;
 }
 
 

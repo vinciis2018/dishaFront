@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { FullLayout } from '../../layouts/AppLayout';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { createProduct, getAllProducts } from '../../store/slices/productsSlice';
-import type { ProductFormData } from '../../types';
+import type { Product, ProductFormData } from '../../types';
 import type { RootState } from '../../store';
 import { useNavigate } from 'react-router-dom';
 import { useDebouncedCallback } from 'use-debounce';
@@ -12,6 +12,12 @@ export function ProductsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [openQuantityAdd, setOpenQuantityAdd] = useState(false);
+  // Add this near your other state declarations
+  const [cart, setCart] = useState(() => {
+    return JSON.parse(localStorage.getItem('cart') || '{}');
+  });
+
   const itemsPerPage = 10;
   
   const dispatch = useAppDispatch();
@@ -23,6 +29,7 @@ export function ProductsPage() {
     pagination 
   } = useAppSelector((state: RootState) => state.products);
 
+  const { user } = useAppSelector((state: RootState) => state.auth);
   // Debounced search
   const debouncedSearch = useDebouncedCallback(
     (search: string) => {
@@ -86,19 +93,49 @@ export function ProductsPage() {
   }, [dispatch, currentPage, itemsPerPage, searchTerm]);
 
 
+  const updateCart = (newCart: Record<string, unknown>) => {
+    localStorage.setItem('cart', JSON.stringify(newCart));
+    setCart(newCart);
+  };
+
+  const handleAddToCart = (prod: Product, quantity= 1) => {
+    const newCart = { ...cart };
+    if (newCart[prod._id]) {
+      newCart[prod._id].orderQuantity += quantity;
+    } else {
+      newCart[prod._id] = { ...prod, orderQuantity: quantity };
+    }
+    updateCart(newCart);
+  }
+
+  const handleRemoveFromCart = (prod: Product) => {
+    const newCart = { ...cart };
+    if (newCart[prod._id]) {
+      if (newCart[prod._id].orderQuantity <= 1) {
+        delete newCart[prod._id];
+      } else {
+        newCart[prod._id].orderQuantity -= 1;
+      }
+      updateCart(newCart);
+    }
+  }
+
   const Footer = () => {
     return (
       <div className="bg-green2 flex justify-between items-center p-4 rounded-t-2xl">
         <div className="">
           <p className="text-xs font-semibold text-white">Total Amount</p>
-          <p className="text-lg font-semibold text-white">₹ 12000.00</p>
-          <p className="text-xs text-gray-200">12 Products added to cart</p>
+          <p className="text-lg font-semibold text-white">₹ {Object.keys(cart).reduce((total, productId) => total + ((cart[productId].orderQuantity || 0) * (cart[productId].ptr || 0)), 0).toFixed(2)}</p>
+          <p className="text-xs text-gray-200">{Object.keys(cart).length} Products added to cart</p>
         </div>
         <div className="flex items-center space-x-3">
           <button
             type="button"
             className="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-transparent rounded-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            // onClick={handleAddToCart}
+            onClick={() => {
+              alert('Products added to cart');
+              navigate("/cart");
+            }}
           >
             Checkout
           </button>
@@ -112,16 +149,32 @@ export function ProductsPage() {
     <FullLayout footer={Footer()}>
       <div className="h-auto">
         <div className="bg-white px-4 py-2">
-          <div className="sm:flex sm:items-center">
-            <div className="sm:flex-auto flex items-center justify-between">
-              <h1 className="text-xl font-semibold text-[var(--text-primary)]">Products</h1>
+          <div className="">
+            <div className="flex items-center justify-between">
+            <button
+                onClick={() => navigate(-1)}
+                className="flex items-center text-sm font-medium hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+              >
+                <span className="rounded-full bg-gray-100 p-2 mr-1">
+                  <i className="fi fi-rr-arrow-left flex items-center" />
+                </span>
+                <span className="text-lg font-semibold">
+                  Products
+                </span>
+              </button>
               <div className="flex gap-2 items-center">
-                <span className="rounded-full bg-gray-100 p-2 cursor-pointer">
+                <span className="relative rounded-full bg-gray-100 p-2 cursor-pointer" onClick={() => navigate("/cart")}>
+                  {Object.keys(cart)?.length > 0 && (
+                    <div className="h-4 w-4 absolute -top-1 -right-1 bg-green2 rounded-full text-xs text-white flex items-center justify-center">{Object.keys(cart)?.length}</div>
+                  )}
                   <i className="fi fi-sr-shopping-bag text-gray-500 flex items-center" />
                 </span>
-                <span className="rounded-full bg-gray-100 p-2 cursor-pointer" onClick={() => setIsFormOpen(true)}>
-                  <i className="fi fi-sr-plus text-gray-500 flex items-center" />
-                </span>
+                {user?.role === "admin" && (
+                  <span className="rounded-full bg-gray-100 p-2 cursor-pointer" onClick={() => setIsFormOpen(true)}>
+                    <i className="fi fi-sr-plus text-gray-500 flex items-center" />
+                  </span>
+                )}
+                
               </div>
             </div>
           </div>
@@ -237,11 +290,13 @@ export function ProductsPage() {
               {products.map((product) => (
                 <div
                   key={product._id}
-                  onClick={() => navigate(`/products/${product._id}`)}
                   className="bg-white overflow-hidden shadow rounded-2xl hover:shadow-md transition-shadow duration-200 cursor-pointer border border-[var(--border-color)]"
                 >
                   <div className="p-4 flex gap-2 justify-between h-full">
-                    <div className="">
+                    <div
+                      className="" 
+                      onClick={() => navigate(`/products/${product._id}`)}
+                    >
                       <div className="truncate pb-1">
                         <h3 className="text-md font-semibold text-[var(--text-primary)]">{product.name}</h3>
                         <p className="text-xs text-gray-500 truncate">{product.formula}</p>
@@ -262,13 +317,41 @@ export function ProductsPage() {
                         <img className="h-full rounded-md" src={product.images[0]} alt="product" />
                       </div>
                       <div className="-mt-4 mx-2">
-                        <button
-                          type="button"
-                          className="w-full rounded-full flex items-center justify-center bg-violet text-white font-semibold p-2"
-                          onClick={() => {}}
-                        >
-                          Add
-                        </button>
+                        {openQuantityAdd || cart[product._id] ? (
+                          <div className="bg-violet rounded-full p-2">
+                            <div className="flex items-center justify-between">
+                              <button
+                                type="button"
+                                className="h-5 w-5 text-sm font-bold text-violet flex items-center justify-center bg-white border border-transparent rounded-full shadow-sm hover:bg-white focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-violet"
+                                onClick={() => handleRemoveFromCart(product)}
+                                disabled={cart[product._id]?.orderQuantity === 1}
+                              >
+                                -
+                              </button>
+                              <span className="text-sm font-bold text-white">{cart[product._id]?.orderQuantity}</span>
+                              <button
+                                type="button"
+                                className="h-5 w-5 text-sm font-bold text-violet flex items-center justify-center bg-white border border-transparent rounded-full shadow-sm hover:bg-white focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-violet"
+                                onClick={() => handleAddToCart(product, 1)}
+                                disabled={cart[product._id]?.orderQuantity === product?.unitQuantity}
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            className="w-full rounded-full flex items-center justify-center bg-violet text-white font-semibold p-2"
+                            onClick={() => {
+                              handleAddToCart(product, 1);
+                              setOpenQuantityAdd(true);
+                            }}
+                          >
+                            Add
+                          </button>
+                        )}
+                        
                       </div>
                     </div>
                       

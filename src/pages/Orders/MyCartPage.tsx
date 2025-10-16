@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { FullLayout } from '../../layouts/AppLayout';
 import { useNavigate } from 'react-router-dom';
-import { useDebouncedCallback } from 'use-debounce';
 import type { Product } from '../../types';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { createOrder } from '../../store/slices/ordersSlice';
@@ -17,72 +16,19 @@ type CartItems = Record<string, CartItem>;
 export function MyCartPage() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [cartItems, setCartItems] = useState<CartItems>({});
-  const [filteredItems, setFilteredItems] = useState<CartItems>({});
+  const [cart, setCart] = useState<CartItems>(JSON.parse(localStorage.getItem('cart') || '{}'));
+  const [filteredItems, setFilteredItems] = useState<CartItems>(JSON.parse(localStorage.getItem('cart') || '{}'));
   
   const { user } = useAppSelector((state) => state.auth);
 
-  const { status } = useAppSelector((state) => state.orders);
+  const { status, error } = useAppSelector((state) => state.orders);
 
-  // Load cart items from localStorage on component mount
-  useEffect(() => {
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      try {
-        const parsedCart = JSON.parse(savedCart);
-        setCartItems(parsedCart);
-        setFilteredItems(parsedCart);
-      } catch (error) {
-        console.error('Error parsing cart data:', error);
-      }
-    }
-  }, []);
 
   // Update filtered items when cart items change
   useEffect(() => {
-    setFilteredItems(cartItems);
-  }, [cartItems]);
-  // Debounced search
-  const debouncedSearch = useDebouncedCallback(
-    (search: string) => {
-      if (search.trim() === '') {
-        setFilteredItems(cartItems);
-      } else {
-        // Filter cart items based on search term (case-insensitive)
-        const filtered = Object.entries(cartItems).reduce((acc, [key, item]) => {
-          if (
-            item.name.toLowerCase().includes(search.toLowerCase()) ||
-            (item.formula && item.formula.toLowerCase().includes(search.toLowerCase()))
-          ) {
-            acc[key] = item;
-          }
-          return acc;
-        }, {} as CartItems);
-        
-        setFilteredItems(filtered);
-      }
-    },
-    300 // 300ms delay
-  );
-
-  // Handle search input change
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchTerm(value);
-    if (value === '') {
-      setFilteredItems(cartItems);
-    } else {
-      debouncedSearch(value);
-    }
-  };
-
-  // Clear search and reset filtered items
-  const clearSearch = () => {
-    setSearchTerm('');
-    setFilteredItems(cartItems);
-  };
-
+    setFilteredItems(cart);
+  }, [cart]);
+ 
   // Load cart items from localStorage on component mount is already handled by the first useEffect
 
   const handleOrderPlacement = () => {
@@ -112,60 +58,82 @@ export function MyCartPage() {
     if (status == "succeeded") {
       console.log("status: ", status);
       localStorage.setItem("cart", "");
+      setCart(JSON.parse(localStorage.getItem('cart') || '{}'));
       navigate("/products");
     }
   }, [navigate, status]);
-  return (
-    <FullLayout>
-      <div className="p-4 bg-[var(--background-alt)]">
-        <div className="sm:flex sm:items-center">
-          <div className="sm:flex-auto">
-            <h1 className="text-2xl font-semibold text-[var(--text-primary)]">My Cart</h1>
-            <p className="mt-2 text-sm text-[var(--text-secondary)]">
-              A list of all the products in your cart.
-            </p>
-          </div>
-          <div className="flex items-center space-x-3">
-            <button
-              type="button"
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              onClick={handleOrderPlacement}
-            >
-              Place Order
-            </button>
-          </div>
-        </div>
 
-        {/* Search and filter */}
-        <div className="mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="relative flex-1 max-w-md">
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <i className="fi fi-rr-search h-4 w-4 flex items-center text-[var(--text-secondary)]" aria-hidden="true" />
+
+  const Footer = () => {
+    return (
+      <div className="bg-green2 flex justify-between items-center p-4 rounded-t-2xl">
+         <div className="">
+          <p className="text-xs font-semibold text-white">Total Amount</p>
+          <p className="text-lg font-semibold text-white">₹ {Object.keys(cart).reduce((total, productId) => total + ((cart[productId].orderQuantity || 0) * (cart[productId].ptr || 0)), 0).toFixed(2)}</p>
+          <p className="text-xs text-gray-200">{Object.keys(cart).length} Products added to cart</p>
+        </div>
+        <div className="flex items-center space-x-3">
+          <button
+            type="button"
+            className="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-transparent rounded-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            onClick={handleOrderPlacement}
+          >
+            Place Order
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <FullLayout footer={Footer()}>
+      <div className="h-auto">
+        <div className="px-4 py-2 bg-white">
+          <div className="">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => navigate(-1)}
+                className="flex items-center text-sm font-medium hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+              >
+                <span className="rounded-full bg-gray-100 p-2 mr-1">
+                  <i className="fi fi-rr-arrow-left flex items-center" />
+                </span>
+                <span className="text-lg font-semibold">
+                  Checkout
+                </span>
+              </button>
+              
+              <div className="flex gap-2 items-center">
+                <span className="relative rounded-full bg-gray-100 p-2 cursor-pointer" onClick={() => navigate("/cart")}>
+                  <i className="fi fi-br-interrogation text-gray-500 flex items-center" />
+                </span>
               </div>
-              <input
-                type="text"
-                placeholder="Search products..."
-                value={searchTerm}
-                onChange={handleSearchChange}
-                className="block w-full pl-10 pr-10 py-2 border border-[var(--border-color)] rounded-md bg-[var(--bg-secondary)] text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent sm:text-sm"
-              />
-              {searchTerm && (
-                <button
-                  title="Clear search"
-                  type="button"
-                  onClick={clearSearch}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-                >
-                  <i className="fi fi-rr-xmark h-4 w-4 flex items-center text-[var(--text-secondary)]" aria-hidden="true" />
-                </button>
-              )}
             </div>
           </div>
+          
         </div>
 
-        {/* Products list */}
-        {Object.keys(filteredItems).length === 0 ? (
+        {/* Cart items */}
+        {status === 'loading' ? (
+          <div className="mt-8 flex justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-primary)]"></div>
+          </div>
+        ) : status === 'failed' ? (
+          <div className="mt-8 bg-red-50 border-l-4 border-red-400 p-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-700">
+                  {error || 'Failed to load products. Please try again.'}
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : Object.keys(filteredItems).length === 0 ? (
           <div className="mt-8 text-center">
             <svg
               className="mx-auto h-12 w-12 text-[var(--text-secondary)]"
@@ -184,13 +152,13 @@ export function MyCartPage() {
             </svg>
             <h3 className="mt-2 text-sm font-medium text-[var(--text-primary)]">No products</h3>
             <p className="mt-1 text-sm text-[var(--text-secondary)]">
-              Add products to your cart.
+              Explore our wide range of products and place your order...
             </p>
             <div className="mt-6">
               <button
                 type="button"
                 onClick={() => navigate("/products")}
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[var(--color-secondary)] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-secondary)]"
+                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[var(--color-primary)] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)]"
               >
                 <i className="fi fi-rr-plus h-4 w-4 flex items-center text-[var(--text-secondary)]" />
                 Go Shopping
@@ -198,52 +166,124 @@ export function MyCartPage() {
             </div>
           </div>
         ) : (
-          <div className="mt-8">
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {Object.entries(filteredItems).map(([id, product]) => (
-                <div
-                  key={id}
-                  onClick={() => navigate(`/products/${id}`)}
-                  className="bg-[var(--bg-secondary)] overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-200 cursor-pointer border border-[var(--border-color)]"
-                >
-                  <div className="p-5">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 bg-[var(--color-primary)] rounded-md p-3">
-                        <svg
-                          className="h-6 w-6 text-white"
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                          />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                          />
-                        </svg>
-                      </div>
-                      <div className="ml-4">
-                        <h3 className="text-lg font-medium text-[var(--text-primary)]">{product.name}</h3>
-                        <p className="text-sm text-[var(--text-secondary)]">{product.formula}</p>
-                        <p className="text-sm text-[var(--text-secondary)] mt-1">
-                          Quantity: {product.quantity} | 
-                          Price: INR{(product.price * product.quantity).toFixed(2)}
-                        </p>
+          <div className="p-2 overflow-y-auto h-screen">
+            <div className="rounded-2xl border bg-white p-2">
+              <div className="flex items-center justify-between p-2 border-b border-dotted">
+                <h1 className="font-semibold text-lg">Added Products</h1>
+                <p className="text-xs font-semibold text-gray-500 cursor-pointer">Remove All</p>
+              </div>
+              <div className="">
+                {Object.entries(filteredItems).map(([id, product]) => (
+                  <div
+                    key={id}
+                    onClick={() => navigate(`/products/${id}`)}
+                    className="grid grid-cols-7 border-b p-2 border-dotted"
+                  >
+                    <div className="col-span-1">
+                      <img src={product.images[0]} alt={product.name} />
+                    </div>
+                    <div className="col-span-3 flex items-center">
+                      <h1 className="text-sm font-semibold">{product.name}</h1>
+                      
+                    </div>
+                    <div className="col-span-2 p-1">
+                      <div className="bg-violet rounded-full p-2">
+                        <div className="flex items-center justify-between">
+                          <button
+                            type="button"
+                            className="h-5 w-5 text-sm font-bold text-violet flex items-center justify-center bg-white border border-transparent rounded-full shadow-sm hover:bg-white focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-violet"
+                            // onClick={() => handleRemoveFromCart(product)}
+                            disabled={cart[product._id]?.orderQuantity === 1}
+                          >
+                            -
+                          </button>
+                          <span className="text-sm font-bold text-white">{cart[product._id]?.orderQuantity}</span>
+                          <button
+                            type="button"
+                            className="h-5 w-5 text-sm font-bold text-violet flex items-center justify-center bg-white border border-transparent rounded-full shadow-sm hover:bg-white focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-violet"
+                            // onClick={() => handleAddToCart(product, 1)}
+                            disabled={cart[product._id]?.orderQuantity === product?.unitQuantity}
+                          >
+                            +
+                          </button>
+                        </div>
                       </div>
                     </div>
+                    <div className="col-span-1 flex items-center justify-center">
+                      <p className="text-xs font-semibold text-violet">₹ {(cart[product._id]?.orderQuantity || 0) * (cart[product._id]?.ptr || 0)}</p>
+                    </div>  
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
 
+            <div className="my-2 bg-white border rounded-2xl">
+              <div className="flex items-center justify-between p-4">
+                <p className="text-sm ">Missed Something?</p>
+                <p className="text-sm text-violet font-semibold">
+                  Add More {"  >"}
+                </p>
+              </div>
+            </div>
+            <div className="px-2 py-2">
+              <h1 className="text-sm font-semibold">Add Similar Items</h1>
+              <div className="flex items-center gap-2 overflow-x-auto max-w-screen">
+                {}
+                <div className="">
+
+                </div>
+              </div>
+
+            </div>
+            <div className="my-2 bg-white border rounded-2xl">
+              <div className="flex items-center justify-between p-4">
+                <p className="text-sm ">View Coupons & Offers</p>
+                <p className="text-sm text-violet font-semibold">
+                {"  >"}
+                </p>
+              </div>
+            </div>
+
+            <div className="my-2">
+              <div className="rounded-2xl border bg-white p-2">
+                <div className="p-2 flex items-center justify-between">
+                  <h1 className="text-sm font-semibold">Bill Summary</h1>
+                  <p className="text-sm font-bold">
+                    ₹ {
+                    Number(Object.keys(cart).reduce((total, productId) => total + ((cart[productId].orderQuantity || 0) * (cart[productId].ptr || 0)), 0).toFixed(2))
+                    + Number(Object.keys(cart).reduce((total, productId) => total + ((cart[productId].orderQuantity || 0) * (cart[productId].ptr || 0) * 0.05), 0).toFixed(2))
+                    + Number(50)
+                    }
+
+                  </p>
+                </div>
+                <div className="px-2 py-1 flex items-center justify-between">
+                  <p className="text-xs text-gray-500">Item Total</p>
+                  <p className="text-xs text-gray-500">₹ {Object.keys(cart).reduce((total, productId) => total + ((cart[productId].orderQuantity || 0) * (cart[productId].ptr || 0)), 0).toFixed(2)}</p>
+                </div>
+                <div className="px-2 py-1 flex items-center justify-between">
+                  <p className="text-xs text-gray-500">Tax</p>
+                  <p className="text-xs text-gray-500">5%</p>
+                </div>
+                <div className="px-2 py-1 flex items-center justify-between">
+                  <p className="text-xs text-gray-500">Discount</p>
+                  <p className="text-xs text-gray-500">N/A</p>
+                </div>
+                <div className="px-2 py-1 flex items-center justify-between">
+                  <p className="text-xs text-gray-500">Delivery Charge</p>
+                  <p className="text-xs text-gray-500">₹ 50</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mx-2 my-1 bg-white border rounded-2xl">
+              <div className="flex items-center justify-between p-4">
+                <p className="text-sm ">Payment Mode</p>
+                <p className="text-sm text-violet font-semibold">
+                Credit {"  >"}
+                </p>
+              </div>
+            </div>
           </div>
         )}
       </div>
