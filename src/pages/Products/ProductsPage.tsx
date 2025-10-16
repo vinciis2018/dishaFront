@@ -12,7 +12,7 @@ export function ProductsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [openQuantityAdd, setOpenQuantityAdd] = useState(false);
+  const [openQuantityAdd, setOpenQuantityAdd] = useState<string[]>([]);
   // Add this near your other state declarations
   const [cart, setCart] = useState(() => {
     return JSON.parse(localStorage.getItem('cart') || '{}');
@@ -103,7 +103,13 @@ export function ProductsPage() {
     if (newCart[prod._id]) {
       newCart[prod._id].orderQuantity += quantity;
     } else {
-      newCart[prod._id] = { ...prod, orderQuantity: quantity };
+      newCart[prod._id] = {
+        ...prod,
+        orderQuantity: quantity,
+        retailerId: user?._id,
+        retailerName: user?.username,
+        retailerEmail: user?.email
+      };
     }
     updateCart(newCart);
   }
@@ -113,6 +119,13 @@ export function ProductsPage() {
     if (newCart[prod._id]) {
       if (newCart[prod._id].orderQuantity <= 1) {
         delete newCart[prod._id];
+        setOpenQuantityAdd((prev) => {
+          if (prev.includes(prod._id)) {
+            return prev.filter((id) => id !== prod._id);
+          } else {
+            return prev;
+          }
+        });
       } else {
         newCart[prod._id].orderQuantity -= 1;
       }
@@ -121,6 +134,7 @@ export function ProductsPage() {
   }
 
   const Footer = () => {
+    if (Object.keys(cart).length === 0) return null;
     return (
       <div className="bg-green2 flex justify-between items-center p-4 rounded-t-2xl">
         <div className="">
@@ -134,6 +148,7 @@ export function ProductsPage() {
             className="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-transparent rounded-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             onClick={() => {
               alert('Products added to cart');
+              updateCart(cart);
               navigate("/cart");
             }}
           >
@@ -286,11 +301,11 @@ export function ProductsPage() {
           </div>
         ) : (
           <div className="p-2">
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="">
               {products.map((product) => (
                 <div
                   key={product._id}
-                  className="bg-white overflow-hidden shadow rounded-2xl hover:shadow-md transition-shadow duration-200 cursor-pointer border border-[var(--border-color)]"
+                  className="my-1 bg-white overflow-hidden shadow rounded-2xl hover:shadow-md transition-shadow duration-200 cursor-pointer border border-[var(--border-color)]"
                 >
                   <div className="p-4 flex gap-2 justify-between h-full">
                     <div
@@ -317,14 +332,14 @@ export function ProductsPage() {
                         <img className="h-full rounded-md" src={product.images[0]} alt="product" />
                       </div>
                       <div className="-mt-4 mx-2">
-                        {openQuantityAdd || cart[product._id] ? (
+                        {openQuantityAdd.includes(product._id) || cart[product._id] ? (
                           <div className="bg-violet rounded-full p-2">
                             <div className="flex items-center justify-between">
                               <button
                                 type="button"
                                 className="h-5 w-5 text-sm font-bold text-violet flex items-center justify-center bg-white border border-transparent rounded-full shadow-sm hover:bg-white focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-violet"
                                 onClick={() => handleRemoveFromCart(product)}
-                                disabled={cart[product._id]?.orderQuantity === 1}
+                                disabled={cart[product._id]?.orderQuantity === 0}
                               >
                                 -
                               </button>
@@ -345,7 +360,13 @@ export function ProductsPage() {
                             className="w-full rounded-full flex items-center justify-center bg-violet text-white font-semibold p-2"
                             onClick={() => {
                               handleAddToCart(product, 1);
-                              setOpenQuantityAdd(true);
+                              setOpenQuantityAdd((prev) => {
+                                if (prev.includes(product._id)) {
+                                  return prev;
+                                } else {
+                                  return [...prev, product._id];
+                                }
+                              });
                             }}
                           >
                             Add

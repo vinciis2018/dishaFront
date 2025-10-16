@@ -12,7 +12,9 @@ export function ProductDetailsPage() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  const [productQuantity, setProductQuantity] = useState(1);
+  const [productQuantity, setProductQuantity] = useState(() => {
+    return JSON.parse(localStorage.getItem('cart') || '{}')?.[id || '']?.orderQuantity || 1;
+});
 
   const { product, status } = useAppSelector((state) => state.products);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -57,18 +59,18 @@ export function ProductDetailsPage() {
     const cart = JSON.parse(localStorage.getItem('cart') || '{}');
     const cartItemIds = Object.keys(cart);
     if (product) {
-      if (!cartItemIds.includes(product._id) || productQuantity !== product.unitQuantity) {
+      console.log("asadd", productQuantity, cart[product._id].orderQuantity)
+      if (!cartItemIds.includes(product._id) || productQuantity !== cart[product._id].orderQuantity) {
         const productToAdd = {...product, orderQuantity: productQuantity};
         console.log(productToAdd);
         cart[productToAdd?._id] = productToAdd;
         localStorage.setItem('cart', JSON.stringify(cart));
+        alert('Product added to cart');
       } else {
-        alert('Product already added to cart');
         navigate("/cart");
       }
     }
     setCart(JSON.parse(localStorage.getItem('cart') || '{}'));
-    alert('Product added to cart');
   };
 
   if (isEditMode && product) {

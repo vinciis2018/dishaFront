@@ -47,6 +47,9 @@ interface CreateOrderPayload {
   paymentMethod: string;
   deliveryAddress: object;
   notes?: string;
+  retailerId: string;
+  retailerName: string;
+  retailerEmail: string;
 }
 
 export const createOrder = createAsyncThunk<Order, CreateOrderPayload, { rejectValue: string }>(
@@ -92,6 +95,7 @@ interface FetchOrdersParams {
   status?: string;
   startDate?: string;
   endDate?: string;
+  userId?: string;
 }
 
 export const getAllOrders = createAsyncThunk<
@@ -125,6 +129,66 @@ export const getAllOrders = createAsyncThunk<
           ...(status && { status }),
           ...(startDate && { startDate }),
           ...(endDate && { endDate })
+        }
+      });
+      
+      const orders = Array.isArray(response.data.data) ? response.data.data : 
+                    (Array.isArray(response.data.orders) ? response.data.orders : []);
+      
+      const pagination = response.data.pagination || {
+        total: orders.length,
+        currentPage: page,
+        totalPages: Math.ceil(orders.length / limit),
+        limit
+      };
+      
+      return {
+        orders,
+        pagination
+      };
+    } catch (error) {
+      const axiosError = error as { response?: { data?: { message?: string } } };
+      if (axiosError?.response?.data?.message) {
+        return rejectWithValue(axiosError.response.data.message);
+      }
+      return rejectWithValue('Network error occurred');
+    }
+  }
+);
+
+export const getMyOrders = createAsyncThunk<
+  { orders: Order[]; pagination: ApiPagination },
+  FetchOrdersParams | undefined,
+  { rejectValue: string }
+>(
+  'orders/fetchMyOrders',
+  async (params = {}, { rejectWithValue }) => {
+    try {
+      const { 
+        page = 1, 
+        limit = 10, 
+        search = '', 
+        status = '',
+        startDate = '',
+        endDate = '',
+        userId,
+      } = params;
+      
+      const response = await axios.get<{
+        success: boolean;
+        count: number;
+        pagination: ApiPagination;
+        data: Order[];
+        orders?: Order[];
+      }>(`${nodeurl}/orders/my`, {
+        params: {
+          page,
+          limit,
+          ...(search && { search }),
+          ...(status && { status }),
+          ...(startDate && { startDate }),
+          ...(endDate && { endDate }),
+          ...(userId && { userId })
         }
       });
       
@@ -235,6 +299,21 @@ const ordersSlice = createSlice({
       state.totalItems = action.payload.pagination.total;
     });
     builder.addCase(getAllOrders.rejected, (state, action) => {
+      state.status = 'failed';
+      state.error = action.payload || 'Failed to fetch orders';
+    });
+
+    // Get My Orders
+    builder.addCase(getMyOrders.pending, (state) => {
+      state.status = 'loading';
+    });
+    builder.addCase(getMyOrders.fulfilled, (state, action) => {
+      state.status = 'succeeded';
+      state.orders = action.payload.orders;
+      state.pagination = action.payload.pagination;
+      state.totalItems = action.payload.pagination.total;
+    });
+    builder.addCase(getMyOrders.rejected, (state, action) => {
       state.status = 'failed';
       state.error = action.payload || 'Failed to fetch orders';
     });

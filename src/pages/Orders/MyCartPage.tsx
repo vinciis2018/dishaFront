@@ -50,7 +50,10 @@ export function MyCartPage() {
         street: "",
         pincode: "",
       },
-      products: products, 
+      products: products,
+      retailerId: user?._id || "",
+      retailerName: user?.username || "",
+      retailerEmail: user?.email || "",
     }))
   };
   
@@ -69,7 +72,9 @@ export function MyCartPage() {
       <div className="bg-green2 flex justify-between items-center p-4 rounded-t-2xl">
          <div className="">
           <p className="text-xs font-semibold text-white">Total Amount</p>
-          <p className="text-lg font-semibold text-white">₹ {Object.keys(cart).reduce((total, productId) => total + ((cart[productId].orderQuantity || 0) * (cart[productId].ptr || 0)), 0).toFixed(2)}</p>
+          <p className="text-lg font-semibold text-white">
+            ₹ {Number(Object.keys(cart).reduce((total, productId) => total + ((cart[productId].orderQuantity || 0) * (cart[productId].ptr || 0)), 0) + 50 + Object.keys(cart).reduce((total, productId) => total + ((cart[productId].orderQuantity || 0) * (cart[productId].ptr || 0) * 0.05), 0)).toFixed(2)}
+          </p>
           <p className="text-xs text-gray-200">{Object.keys(cart).length} Products added to cart</p>
         </div>
         <div className="flex items-center space-x-3">
@@ -176,15 +181,16 @@ export function MyCartPage() {
                 {Object.entries(filteredItems).map(([id, product]) => (
                   <div
                     key={id}
-                    onClick={() => navigate(`/products/${id}`)}
                     className="grid grid-cols-7 border-b p-2 border-dotted"
                   >
-                    <div className="col-span-1">
+                    <div
+                      className="col-span-1"
+                      onClick={() => navigate(`/products/${id}`)}
+                    >
                       <img src={product.images[0]} alt={product.name} />
                     </div>
                     <div className="col-span-3 flex items-center">
                       <h1 className="text-sm font-semibold">{product.name}</h1>
-                      
                     </div>
                     <div className="col-span-2 p-1">
                       <div className="bg-violet rounded-full p-2">
@@ -276,7 +282,7 @@ export function MyCartPage() {
               </div>
             </div>
 
-            <div className="mx-2 my-1 bg-white border rounded-2xl">
+            <div className="my-1 bg-white border rounded-2xl">
               <div className="flex items-center justify-between p-4">
                 <p className="text-sm ">Payment Mode</p>
                 <p className="text-sm text-violet font-semibold">

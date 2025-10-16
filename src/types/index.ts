@@ -132,8 +132,6 @@ export interface RetailerFormData {
 
 export interface Order {
   _id: string;
-  retailerId: string;
-  distributorId: string;
   products: Product[];
   totalAmount: number;
   status: string;
@@ -152,6 +150,12 @@ export interface Order {
   paymentStatus: string;
   price: number;
   quantity: number;
+  retailerName?: string;
+  retailerEmail?: string;
+  retailerId?: string;
+  distributorName?: string;
+  distributorEmail?: string;
+  distributorId?: string;
 }
 
 
