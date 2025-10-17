@@ -57,6 +57,9 @@ interface CreateDistributorPayload {
   images?: string[];
   products?: Product[];
   ordersRecieved?: Order[];
+  ownerId?: string;
+  ownerName?: string;
+  ownerEmail?: string;
 }
 
 
@@ -94,19 +97,7 @@ export const createDistributor = createAsyncThunk<Distributor, CreateDistributor
   async (distributorData, { rejectWithValue }) => {
     try {
       console.log(distributorData)
-      const response = await axios.post<Distributor>(`${nodeurl}/distributors/create`, {
-        name: distributorData.name,
-        address: distributorData.address,
-        latitude: distributorData.latitude,
-        longitude: distributorData.longitude,
-        city: distributorData.city,
-        state: distributorData.state,
-        country: distributorData.country,
-        zipCode: distributorData.zipCode,
-        images: distributorData.images || [],
-        products: distributorData.products || [],
-        ordersRecieved: distributorData.ordersRecieved || []
-      });
+      const response = await axios.post<Distributor>(`${nodeurl}/distributors/create`, distributorData);
       return response.data;
     } catch (error) {
       if (error && typeof error === 'object' && 'response' in error) {

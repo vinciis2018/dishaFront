@@ -1,7 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { FullLayout } from '../../layouts/AppLayout';
 import { useAppDispatch, useAppSelector } from '../../store';
-import { ArrowLeftIcon, DocumentTextIcon, PencilIcon } from '@heroicons/react/24/outline';
 import { useEffect, useState } from 'react';
 import { getDistributorDetails, updateDistributor } from '../../store/slices/distributorsSlice';
 import type { DistributorFormData } from '../../types';
@@ -54,43 +53,37 @@ export function DistributorDetailsPage() {
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Edit Distributor</h2>
             <button
               type="button"
-              onClick={() => setIsEditMode(true)}
+              onClick={() => setIsEditMode(false)}
               className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-              title="Edit product details"
-              aria-label="Edit product details"
+              title="Cancel editing"
+              aria-label="Cancel editing"
             >
-              <PencilIcon className="h-5 w-5" />
+              <span className="sr-only">Cancel</span>
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
           </div>
+          
           <DistributorForm
             isOpen={isEditMode}
             onClose={() => setIsEditMode(false)}
             onSubmit={handleUpdateSite}
+            isLoading={isSubmitting}
             initialData={{
-              name: distributor.name,
-              address: distributor.address,
-              latitude: distributor.latitude,
-              longitude: distributor.longitude,
-              city: distributor.city,
-              state: distributor.state,
-              country: distributor.country,
-              zipCode: distributor.zipCode,
+              ...distributor,
+              // Map the distributor data to match the DistributorFormData type
+              zipCode: distributor.zipCode || '',
+              gst: distributor.gst || '',
+              pan: distributor.pan || '',
               images: distributor.images || [],
               products: distributor.products || [],
               ordersRecieved: distributor.ordersRecieved || [],
+              ownerId: distributor.ownerId || '',
+              ownerName: distributor.ownerName || '',
+              ownerEmail: distributor.ownerEmail || '',
             }}
-            isLoading={isSubmitting}
           />
-        </div>
-      </FullLayout>
-    );
-  }
-
-  if (!distributor) {
-    return (
-      <FullLayout>
-        <div className="p-8 text-center">
-          <p>Loading product details...</p>
         </div>
       </FullLayout>
     );
@@ -110,15 +103,16 @@ export function DistributorDetailsPage() {
     return (
       <FullLayout>
         <div className="text-center py-12">
-          <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-lg font-medium text-gray-900 dark:text-white">No product found</h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">The requested product could not be found.</p>
+          <i className="fi fi-sr-store mx-auto h-12 w-12 text-gray-400" />
+          <h3 className="mt-2 text-lg font-medium text-gray-900 dark:text-white">No distributor found</h3>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">The requested distributor could not be found.</p>
           <div className="mt-6">
             <button
+              type="button"
               onClick={() => navigate(-1)}
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
-              <ArrowLeftIcon className="-ml-1 mr-2 h-4 w-4" />
+              <i className="fi fi-rr-arrow-left -ml-1 mr-2 h-4 w-4" />
               Back to Distributors
             </button>
           </div>
@@ -127,106 +121,116 @@ export function DistributorDetailsPage() {
     );
   }
 
-  const { name, 
-    address,
-    // images,
-    // latitude, longitude, city, state, country, zipCode 
-  } = distributor;
-  
   return (
     <FullLayout>
-      <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
-          >
-            <ArrowLeftIcon className="h-4 w-4 mr-1" />
-            Back to Distributors
-          </button>
-          
-          <div className="flex items-center space-x-3">
+      <div className="max-w-7xl mx-auto">
+        <div className="px-4 py-2 bg-white">
+          <div className="flex flex-row items-center justify-between gap-4">
             <button
-              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              onClick={() => setIsEditMode(true)}
               type="button"
+              onClick={() => navigate("/distributors")}
+              className="flex items-center text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
             >
-              Edit Distributor
+              <span className="rounded-full bg-gray-100 p-2 mr-1">
+                <i className="fi fi-rr-arrow-left flex items-center" />
+              </span>
+              <span className="text-lg font-semibold">
+                Distributor Details
+              </span>
             </button>
-            <button className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-              View Distributors
-            </button>
+            
+            <div className="flex gap-2 items-center">
+              <button
+                onClick={() => setIsEditMode(true)}
+                className="rounded-full bg-gray-100 p-2 hover:bg-gray-200 transition-colors"
+                title="Edit distributor"
+                aria-label="Edit distributor"
+              >
+                <i className="fi fi-sr-edit text-gray-500 flex items-center" />
+              </button>
+            </div>
           </div>
         </div>
-
-        <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg">
+        
+        <div className="h-screen overflow-y-auto py-2">
           {/* Main Content */}
-          <div className="px-6 py-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {/* Left Column - Campaign Info */}
-              <div className="md:col-span-2 space-y-8">
-                <div className="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-center space-x-3">
-                      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                        {name}
-                      </h1>
-                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{name}</p>
-                    </div>
-                    
-                  </div>
-                </div>
-
-                <div className="px-4 py-5 sm:p-6">
-                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    {/* Location Details */}
-                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-3">
-                        Manufacturer
-                      </h3>
-                      <div className="space-y-3">
-                        {address}
-                      </div>
-                    </div>
-
-                    {/* Distributor Information */}
-                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-3">
-                        Availability
-                      </h3>
-                      <div className="space-y-3">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white">
-                            {name ? "Available" : "Not Available"}
-                          </p>
-                      </div>
-                    </div>
-
-                    {/* Coordinates */}
-                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-3">
-                        Stocks
-                      </h3>
-                      <div className="space-y-3">
-                        <div>
-                          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Available</p>
-                          <p className="text-sm text-gray-900 dark:text-white">
-                            {name}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Min Order Quantity</p>
-                          <p className="text-sm text-gray-900 dark:text-white">
-                            {name}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Distributor Images */}
-                  
+          <div className="bg-white">
+            <div className="p-4">
+              <div className="">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {distributor.name}
+                </h1>
+                <div className="py-1 flex items-center gap-2">
+                  <i className="fi fi-rr-marker text-violet flex items-center" />
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {[distributor.address, distributor.city, distributor.state, distributor.country, distributor.zipCode]
+                      .filter(Boolean)
+                      .join(', ')}
+                  </p>
                 </div>
               </div>
+              <div className="py-1">
+                <p className="col-span-1 text-xs text-violet">Email: {distributor.email}</p>
+                <p className="col-span-1 text-xs text-violet">Phone: {distributor.phone}</p>
+              </div>
+            </div>
+
+            {distributor?.images && distributor?.images.length > 0 && (
+              <div className="w-full">
+                <img 
+                  src={distributor.images[0]} 
+                  alt="distributor" 
+                  className="w-full h-48 object-cover"
+                />
+              </div>
+            )}
+            
+            <div className="p-4">
+              <div className="py-1">
+                <p className="text-md font-semibold text-gray-500">Business Information</p>
+                {distributor.ownerName && (
+                  <p className="text-sm text-gray-500">Owner: {distributor.ownerName}</p>
+                )}
+              </div>
+              
+              <div className="py-1 space-y-1">
+                {distributor.gst && (
+                  <p className="text-xs text-gray-800">GST: {distributor.gst}</p>
+                )}
+                {distributor.pan && (
+                  <p className="text-xs text-gray-500">PAN: {distributor.pan}</p>
+                )}
+              </div>
+              
+              <div className="py-4 space-y-2">
+                <p className="text-sm font-medium text-gray-500">Location</p>
+                <div className="text-xs space-y-1">
+                  <p>{distributor.address}</p>
+                  <p>
+                    {[distributor.city, distributor.state, distributor.country, distributor.zipCode]
+                      .filter(Boolean)
+                      .join(', ')}
+                  </p>
+                  {(distributor.latitude || distributor.longitude) && (
+                    <p className="text-gray-500 mt-2">
+                      Coordinates: {distributor.latitude}, {distributor.longitude}
+                    </p>
+                  )}
+                </div>
+              </div>
+              
+              {distributor.products && distributor.products.length > 0 && (
+                <div className="py-2">
+                  <p className="text-sm font-medium text-gray-500 mb-2">Products</p>
+                  <div className="flex flex-wrap gap-2">
+                    {distributor.products.map((product, index) => (
+                      <span key={index} className="px-2 py-1 bg-gray-100 text-xs rounded-full">
+                        {product.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -109,7 +109,6 @@ export const getAllUsers = createAsyncThunk<
   'users/fetchAllUsers',
   async (params = {}, { rejectWithValue }) => {
     try {
-      console.log(params);
       const { page = 1, limit = 10, search = '' } = params;
       const response = await axios.get<ApiResponse<User>>(`${nodeurl}/users/all`, {
         params: {

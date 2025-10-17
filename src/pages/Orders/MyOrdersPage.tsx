@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { FullLayout } from '../../layouts/AppLayout';
 import { useAppDispatch, useAppSelector } from '../../store';
-import { getMyOrders } from '../../store/slices/ordersSlice';
+import { getAllOrders, getMyOrders } from '../../store/slices/ordersSlice';
 import { useNavigate } from 'react-router-dom';
 import { useDebouncedCallback } from 'use-debounce';
 
@@ -63,13 +63,22 @@ export function MyOrdersPage() {
 
   // Initial data load
   useEffect(() => {
-    dispatch(getMyOrders({ 
-      page: currentPage, 
-      limit: itemsPerPage,
-      search: searchTerm,
-      userId: user?._id 
-    }));
-  }, [dispatch, currentPage, itemsPerPage, searchTerm, user?._id]);
+    if (user?.role == "admin") {
+      dispatch(getAllOrders({
+        page: currentPage, 
+        limit: itemsPerPage,
+        search: searchTerm,
+      }));
+    } else {
+      dispatch(getMyOrders({ 
+        page: currentPage, 
+        limit: itemsPerPage,
+        search: searchTerm,
+        userId: user?._id,
+      }));
+    }
+    
+  }, [dispatch, currentPage, itemsPerPage, searchTerm, user]);
 
   const handleViewOrder = (orderId: string) => {
     navigate(`/orders/${orderId}`);

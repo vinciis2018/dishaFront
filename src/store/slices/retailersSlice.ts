@@ -165,6 +165,28 @@ export const getRetailerDetails = createAsyncThunk<Retailer, string, { rejectVal
   }
 );
 
+
+export const getRetailerByOwnerId = createAsyncThunk<Retailer, string, { rejectValue: string }>(
+  'retailers/getRetailerByOwnerId',
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await axios.get<{ success: boolean; data: Retailer }>(`${nodeurl}/retailers/owner/${id}`);
+      if (response.data.success) {
+        return response.data.data;
+      }
+      return rejectWithValue('Failed to fetch retailer details: Invalid response format');
+    } catch (error) {
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { data?: { message?: string } }, message?: string };
+        return rejectWithValue(
+          axiosError.response?.data?.message || axiosError.message || 'Failed to fetch retailer details'
+        );
+      }
+      return rejectWithValue('An unknown error occurred');
+    }
+  }
+);
+
 export const updateRetailer = createAsyncThunk<Retailer, { id: string; retailerData: Partial<Retailer> }, { rejectValue: string }>(
   'retailers/updateRetailer',
   async ({ id, retailerData }, { rejectWithValue }) => {
@@ -237,6 +259,19 @@ const retailersSlice = createSlice({
       state.retailer = action.payload;
     });
     builder.addCase(getRetailerDetails.rejected, (state, action) => {
+      state.status = 'failed';
+      state.error = action.payload || 'Failed to fetch retailer details';
+    });
+
+    // Get Retailer By Owner Id
+    builder.addCase(getRetailerByOwnerId.pending, (state) => {
+      state.status = 'loading';
+    });
+    builder.addCase(getRetailerByOwnerId.fulfilled, (state, action) => {
+      state.status = 'succeeded';
+      state.retailer = action.payload;
+    });
+    builder.addCase(getRetailerByOwnerId.rejected, (state, action) => {
       state.status = 'failed';
       state.error = action.payload || 'Failed to fetch retailer details';
     });

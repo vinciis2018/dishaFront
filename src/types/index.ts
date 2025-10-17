@@ -160,7 +160,7 @@ export interface Order {
     address: string;
     city: string;
     state: string;
-    pincode: string;
+    zipCode: string;
   };
   notes: string;
   paymentMethod: string;

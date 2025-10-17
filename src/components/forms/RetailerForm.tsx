@@ -208,7 +208,7 @@ export function RetailerForm({ isOpen, onClose, onSubmit, isLoading, initialData
       }));
     }
     dispatch(getAllProducts());
-  }, [initialData]);
+  }, [dispatch, initialData]);
 
   if (!isOpen) return null;
 

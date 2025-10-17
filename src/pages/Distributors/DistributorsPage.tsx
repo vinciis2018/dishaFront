@@ -54,20 +54,10 @@ export function DistributorsPage() {
   };
 
   // Handle create distributor
-  const handleCreateSite = async (siteData: DistributorFormData) => {
+  const handleCreateDistributor = async (distributorData: DistributorFormData) => {
     try {
       await dispatch(
-        createDistributor({
-          name: siteData.name,
-          address: siteData.address,
-          latitude: siteData.latitude,
-          longitude: siteData.longitude,
-          city: siteData.city,
-          state: siteData.state,
-          country: siteData.country,
-          zipCode: siteData.zipCode,
-          images: siteData.images,
-        })
+        createDistributor(distributorData)
       ).unwrap();
       
       // Close the form and refresh the distributors list
@@ -230,36 +220,31 @@ export function DistributorsPage() {
                   onClick={() => navigate(`/distributors/${distributor._id}`)}
                   className="my-1 p-2 bg-white overflow-hidden shadow rounded-2xl hover:shadow-md transition-shadow duration-200 cursor-pointer border border-[var(--border-color)]"
                 >
-                  <div className="p-5">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 bg-[var(--color-primary)] rounded-md p-3">
-                        <svg
-                          className="h-6 w-6 text-white"
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                          />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                          />
-                        </svg>
+                  <div className="p-2 grid grid-cols-12 gap-2 h-full border-b border-dotted" onClick={() => navigate(`/distributor/${distributor._id}`)}>
+                    <div className="col-span-3 h-full">
+                      {distributor?.images && distributor?.images?.length > 0 && (
+                        <div className="h-full flex items-center bg-gray-200 rounded-xl ">
+                          <img className="h-full rounded-md" src={distributor.images[0]} alt="product" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="col-span-8">
+                      <div className="truncate pb-1">
+                        <h3 className="text-md font-semibold text-[var(--text-primary)]">{distributor.name}</h3>
+                        <p className="text-xs text-gray-500 truncate">Owner: {distributor.ownerName}</p>
                       </div>
-                      <div className="ml-4">
-                        <h3 className="text-lg font-medium text-[var(--text-primary)]">{distributor.name}</h3>
-                        <p className="text-sm text-[var(--text-secondary)]">{distributor.address}</p>
+                      <div className="flex items-center gap-2 pt-1">
+                        <i className="fi fi-rr-marker flex items-center text-md text-violet"></i>
+                        <p className="text-sm text-gray-500 truncate">{distributor.address}</p>
                       </div>
                     </div>
-                    
+                    <div className="col-span-1 flex items-center justify-center">
+                      <i className="fi fi-rr-angle-right flex items-center text-md text-violet"></i>
+                    </div>
+                  </div>
+                  <div className="p-2 flex items-center gap-2">
+                      <i className="fi fi-rr-shopping-cart flex items-center text-md text-violet"></i>
+                      <p className="text-sm text-gray-500">{distributor.ordersRecieved?.length || 0} orders received</p>
                   </div>
                 </div>
               ))}
@@ -354,7 +339,7 @@ export function DistributorsPage() {
       <DistributorForm
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
-        onSubmit={handleCreateSite}
+        onSubmit={handleCreateDistributor}
         isLoading={status === 'loading'}
       />
     </FullLayout>

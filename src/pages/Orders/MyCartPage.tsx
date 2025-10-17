@@ -3,59 +3,109 @@ import { FullLayout } from '../../layouts/AppLayout';
 import { useNavigate } from 'react-router-dom';
 import type { Product } from '../../types';
 import { useAppDispatch, useAppSelector } from '../../store';
-import { createOrder } from '../../store/slices/ordersSlice';
+import { createOrder, resetStatus } from '../../store/slices/ordersSlice';
+import { getRetailerByOwnerId } from '../../store/slices/retailersSlice';
 
 interface CartItem extends Product {
   name: string;
-  quantity: number;
   price: number; // Ensure price is defined in the CartItem interface
 }
 
 type CartItems = Record<string, CartItem>;
+
+interface DeliveryAddress {
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  latitude: string;
+  longitude: string;
+}
 
 export function MyCartPage() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [cart, setCart] = useState<CartItems>(JSON.parse(localStorage.getItem('cart') || '{}'));
   const [filteredItems, setFilteredItems] = useState<CartItems>(JSON.parse(localStorage.getItem('cart') || '{}'));
+  const [showAddressForm, setShowAddressForm] = useState(false);
+  const [deliveryAddress, setDeliveryAddress] = useState<DeliveryAddress>({
+    address: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    latitude: '',
+    longitude: ''
+  });
   
   const { user } = useAppSelector((state) => state.auth);
-
   const { status, error } = useAppSelector((state) => state.orders);
-
+  const { retailer } = useAppSelector((state) => state.retailers);
 
   // Update filtered items when cart items change
   useEffect(() => {
     setFilteredItems(cart);
-  }, [cart]);
+    if (user && user?.role === "retailer") {
+      dispatch(getRetailerByOwnerId(user?._id || ""))
+    }
+  }, [cart, dispatch, user]);
  
   // Load cart items from localStorage on component mount is already handled by the first useEffect
 
+  const handleAddressSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!deliveryAddress.address || !deliveryAddress.city || !deliveryAddress.state || !deliveryAddress.zipCode) {
+      alert('Please fill in all required address fields');
+      return;
+    }
+    
+    // If lat/long are not provided, try to geocode the address
+    if (!deliveryAddress.latitude || !deliveryAddress.longitude) {
+      // You can add geocoding logic here if needed
+      // For now, we'll just set some default values
+      setDeliveryAddress(prev => ({
+        ...prev,
+        latitude: '0',
+        longitude: '0'
+      }));
+    }
+    
+    setShowAddressForm(false);
+  };
+
   const handleOrderPlacement = () => {
-    console.log('Order placed');
+    // if (!deliveryAddress.address || !deliveryAddress.city || !deliveryAddress.state || !deliveryAddress.zipCode) {
+    //   setShowAddressForm(true);
+    //   return;
+    // }
     const products = Object.entries(filteredItems)?.map(([id, product]) => ({
       productId: id,
       ...product,
     }));
 
-    if (user?.role == "retailer") {
+    if (user?.role === "retailer" && retailer) {
+      const totalAmount = Object.keys(cart).reduce((total, productId) => {
+        return total + ((cart[productId].orderQuantity || 0) * (cart[productId].ptr || 0));
+      }, 0);
+
       dispatch(createOrder({
         userId: user?._id || "",
         username: user?.username || "",
-        totalAmount: 0,
-        paymentMethod: "",
+        totalAmount: totalAmount,
+        paymentMethod: "online", // Default payment method
         deliveryAddress: {
-          address: "",
-          state: "",
-          city: "",
-          street: "",
-          pincode: "",
+          address: deliveryAddress.address || retailer.address,
+          city: deliveryAddress.city || retailer.city,
+          state: deliveryAddress.state || retailer.state,
+          zipCode: deliveryAddress.zipCode || retailer.zipCode,
+          latitude: deliveryAddress.latitude || retailer.latitude || '0',
+          longitude: deliveryAddress.longitude || retailer.longitude || '0'
         },
         products: products,
-        retailerId: user?._id || "",
-        retailerName: user?.username || "",
-        retailerEmail: user?.email || "",
-      }))
+        retailerId: retailer?._id || "",
+        retailerName: retailer?.name || "",
+        retailerEmail: retailer?.email || "",
+        notes: ""
+      }));
     }
     
   };
@@ -63,11 +113,12 @@ export function MyCartPage() {
   useEffect(() => {
     if (status == "succeeded") {
       console.log("status: ", status);
+      dispatch(resetStatus());
       localStorage.setItem("cart", "");
       setCart(JSON.parse(localStorage.getItem('cart') || '{}'));
       navigate("/products");
     }
-  }, [navigate, status]);
+  }, [navigate, dispatch, status]);
 
 
   const Footer = () => {
@@ -94,9 +145,105 @@ export function MyCartPage() {
     );
   };
 
+  const AddressForm = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <h3 className="text-lg font-medium mb-4">Delivery Address</h3>
+        <form onSubmit={handleAddressSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="address" className="block text-sm font-medium text-gray-700">Address</label>
+            <input
+              type="text"
+              id="address"
+              value={deliveryAddress.address}
+              onChange={(e) => setDeliveryAddress({...deliveryAddress, address: e.target.value})}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              required
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="city" className="block text-sm font-medium text-gray-700">City</label>
+              <input
+                type="text"
+                id="city"
+                value={deliveryAddress.city}
+                onChange={(e) => setDeliveryAddress({...deliveryAddress, city: e.target.value})}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="state" className="block text-sm font-medium text-gray-700">State</label>
+              <input
+                type="text"
+                id="state"
+                value={deliveryAddress.state}
+                onChange={(e) => setDeliveryAddress({...deliveryAddress, state: e.target.value})}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                required
+              />
+            </div>
+          </div>
+          <div>
+            <label htmlFor="zipcode" className="block text-sm font-medium text-gray-700">ZIP Code</label>
+            <input
+              type="text"
+              id="zipcode"
+              value={deliveryAddress.zipCode}
+              onChange={(e) => setDeliveryAddress({...deliveryAddress, zipCode: e.target.value})}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              required
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="latitude" className="block text-sm font-medium text-gray-700">Latitude</label>
+              <input
+                type="text"
+                id="latitude"
+                value={deliveryAddress.latitude}
+                onChange={(e) => setDeliveryAddress({...deliveryAddress, latitude: e.target.value})}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                placeholder="e.g., 12.9716"
+              />
+            </div>
+            <div>
+              <label htmlFor="longitude" className="block text-sm font-medium text-gray-700">Longitude</label>
+              <input
+                type="text"
+                id="longitude"
+                value={deliveryAddress.longitude}
+                onChange={(e) => setDeliveryAddress({...deliveryAddress, longitude: e.target.value})}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                placeholder="e.g., 77.5946"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end space-x-3 mt-6">
+            <button
+              type="button"
+              onClick={() => setShowAddressForm(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 text-sm font-medium text-white bg-violet border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              Save Address
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+
   return (
     <FullLayout footer={Footer()}>
-      <div className="h-auto">
+      {showAddressForm && <AddressForm />}
+      <div className="h-screen">
         <div className="px-4 py-2 bg-white">
           <div className="">
             <div className="flex items-center justify-between">
@@ -175,7 +322,7 @@ export function MyCartPage() {
             </div>
           </div>
         ) : (
-          <div className="p-2 overflow-y-auto h-screen">
+          <div className="p-2 overflow-y-auto h-screen pb-20">
             <div className="rounded-2xl border bg-white p-2">
               <div className="flex items-center justify-between p-2 border-b border-dotted">
                 <h1 className="font-semibold text-lg">Added Products</h1>
@@ -286,12 +433,40 @@ export function MyCartPage() {
               </div>
             </div>
 
-            <div className="my-1 bg-white border rounded-2xl">
+            <div className="my-2 bg-white border rounded-2xl">
               <div className="flex items-center justify-between p-4">
                 <p className="text-sm ">Payment Mode</p>
                 <p className="text-sm text-violet font-semibold">
                 Credit {"  >"}
                 </p>
+              </div>
+            </div>
+
+            <div className="my-2 bg-white border rounded-2xl p-4">
+              <div className="flex items-start justify-between mb-2">
+                <p className="text-sm font-medium text-gray-700">Retailer's Location</p>
+                {user?.role === 'retailer' && (
+                  <button 
+                    type="button" 
+                    onClick={() => setShowAddressForm(true)}
+                    className="text-xs text-violet font-medium"
+                  >
+                    Edit
+                  </button>
+                )}
+              </div>
+              <div className="text-sm text-gray-600">
+                {retailer?.address ? (
+                  <>
+                    <p>{retailer.address}</p>
+                    <p>{retailer.city}, {retailer.state} - {retailer.zipCode}</p>
+                    {retailer.phone && <p className="mt-1">Phone: {retailer.phone}</p>}
+                  </>
+                ) : user?.role === 'retailer' ? (
+                  <p className="text-amber-600">Please update your store location details in your profile.</p>
+                ) : (
+                  <p>No location details available</p>
+                )}
               </div>
             </div>
           </div>

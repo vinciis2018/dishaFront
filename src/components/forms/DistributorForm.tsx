@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getS3Url } from '../../utilities/awsUtils';
-import type { DistributorFormData, Product, User } from '../../types';
+import type { DistributorFormData } from '../../types';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { getAllProducts } from '../../store/slices/productsSlice';
 import { getAllUsers } from '../../store/slices/usersSlice';
@@ -21,12 +21,13 @@ export function DistributorForm({ isOpen, onClose, onSubmit, isLoading, initialD
   
   // Filter users to only include those with distributor role
   const distributors = users.filter(user => user.role === 'distributor');
-  
 
-  const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
-  const [selectedOwner, setSelectedOwner] = useState<User | null>(null);
   const defaultFormData: DistributorFormData = {
     name: '',
+    email: '',
+    phone: '',
+    gst: '',
+    pan: '',
     images: [],
     address: '',
     latitude: '',
@@ -189,9 +190,8 @@ export function DistributorForm({ isOpen, onClose, onSubmit, isLoading, initialD
   const removeProduct = (productId: string) => {
     setFormData(prev => ({
       ...prev,
-      sites: prev.products.filter(product => product._id !== productId)
+      products: prev.products.filter(product => product._id !== productId)
     }));
-    setSelectedProducts(prev => prev.filter(product => product._id !== productId));
   };
 
   const handleProductSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -204,9 +204,6 @@ export function DistributorForm({ isOpen, onClose, onSubmit, isLoading, initialD
         ...prev,
         products: [...prev.products, {...product, productId: product._id}]
       }));
-
-      // Update selectedProducts for display
-      setSelectedProducts(prev => [...prev, product]);
     }
   };
 
@@ -222,32 +219,24 @@ export function DistributorForm({ isOpen, onClose, onSubmit, isLoading, initialD
         ownerName: user.username,
         ownerEmail: user.email,
       }));
-
-      // Update selectedProducts for display
-      setSelectedOwner(user);
     }
   };
 
   useEffect(() => {
     if (initialData) {
       setFormData(initialData);
-      setSelectedProducts(products.filter(p => initialData?.products?.some(product => product._id === p._id)));
-      // serSelectedOwner(initialData.owner);
-
     } else {
       setFormData(prev => ({
         ...prev,
         products: []
       }));
-      setSelectedProducts([]);
-      setSelectedOwner(null);
     }
     dispatch(getAllProducts());
     dispatch(getAllUsers());
   }, [dispatch, initialData]);
   
   if (!isOpen) return null;
-
+  
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 p-4 overflow-y-auto py-8">
       <div className="bg-white dark:bg-black rounded-lg shadow-xl w-full max-w-md my-8">
@@ -285,6 +274,74 @@ export function DistributorForm({ isOpen, onClose, onSubmit, isLoading, initialD
                     required
                     disabled={isLoading}
                   />
+                </div>
+
+                {/* Email and Phone */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-[var(--text-muted)] mb-1">
+                      Email *
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      value={formData.email || ''}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent bg-[var(--background-alt)] text-[var(--text)]"
+                      required
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="phone" className="block text-sm font-medium text-[var(--text-muted)] mb-1">
+                      Phone *
+                    </label>
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      value={formData.phone || ''}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent bg-[var(--background-alt)] text-[var(--text)]"
+                      required
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+
+                {/* GST and PAN */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="gst" className="block text-sm font-medium text-[var(--text-muted)] mb-1">
+                      GST Number
+                    </label>
+                    <input
+                      type="text"
+                      id="gst"
+                      name="gst"
+                      value={formData.gst || ''}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent bg-[var(--background-alt)] text-[var(--text)] uppercase"
+                      disabled={isLoading}
+                      placeholder="22AAAAA0000A1Z5"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="pan" className="block text-sm font-medium text-[var(--text-muted)] mb-1">
+                      PAN Number
+                    </label>
+                    <input
+                      type="text"
+                      id="pan"
+                      name="pan"
+                      value={formData.pan || ''}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent bg-[var(--background-alt)] text-[var(--text)] uppercase"
+                      disabled={isLoading}
+                      placeholder="AAAAA0000A"
+                    />
+                  </div>
                 </div>
 
                 {/* Distributor Images */}
@@ -457,6 +514,40 @@ export function DistributorForm({ isOpen, onClose, onSubmit, isLoading, initialD
                       disabled={isLoading}
                     />
                   </div>
+
+                  {/* Location Coordinates */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="latitude" className="block text-sm font-medium text-[var(--text-muted)] mb-1">
+                        Latitude
+                      </label>
+                      <input
+                        type="text"
+                        id="latitude"
+                        name="latitude"
+                        value={formData.latitude}
+                        onChange={handleChange}
+                        placeholder="e.g., 28.6139"
+                        className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent bg-[var(--background-alt)] text-[var(--text)]"
+                        disabled={isLoading}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="longitude" className="block text-sm font-medium text-[var(--text-muted)] mb-1">
+                        Longitude
+                      </label>
+                      <input
+                        type="text"
+                        id="longitude"
+                        name="longitude"
+                        value={formData.longitude}
+                        onChange={handleChange}
+                        placeholder="e.g., 77.2090"
+                        className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent bg-[var(--background-alt)] text-[var(--text)]"
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 <div>
@@ -481,11 +572,11 @@ export function DistributorForm({ isOpen, onClose, onSubmit, isLoading, initialD
                       ))}
                     </select>
                     
-                    {selectedProducts.length > 0 && (
+                    {formData.products.length > 0 && (
                       <div className="mt-2">
                         <p className="text-sm text-[var(--text-muted)] mb-1">Selected Products:</p>
                         <div className="flex flex-wrap gap-2">
-                          {selectedProducts.map(product => (
+                          {formData.products.map(product => (
                             <span key={product._id} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[var(--primary)] text-[var(--text)]">
                               {product.name}
                               <button 
@@ -526,17 +617,24 @@ export function DistributorForm({ isOpen, onClose, onSubmit, isLoading, initialD
                       ))}
                     </select>
                     
-                    {selectedOwner !== null && (
+                    {formData.ownerId && (
                       <div className="mt-2">
                         <p className="text-sm text-[var(--text-muted)] mb-1">Selected Owner:</p>
                         <div className="flex flex-wrap gap-2">
-                          <span key={selectedOwner._id} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[var(--primary)] text-[var(--text)]">
-                            {selectedOwner.username}
+                          <span key={formData.ownerId} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[var(--primary)] text-[var(--text)]">
+                            {formData.ownerName}
                             <button 
                               type="button"
-                              onClick={() => setSelectedOwner(null)}
+                              onClick={() => setFormData((prev) => {
+                                return {
+                                  ...prev,
+                                  ownerId: '',
+                                  ownerName: '',
+                                  ownerEmail: '',
+                                }
+                              })}
                               className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30"
-                              aria-label={`Remove ${selectedOwner.username}`}
+                              aria-label={`Remove ${formData.ownerName}`}
                             >
                               ×
                             </button>

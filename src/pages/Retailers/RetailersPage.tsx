@@ -238,7 +238,7 @@ export function RetailersPage() {
                       </div>
                       <div className="flex items-center gap-2 pt-1">
                         <i className="fi fi-rr-marker flex items-center text-md text-violet"></i>
-                        <p className="text-sm text-gray-500">{retailer.address}</p>
+                        <p className="text-sm text-gray-500 truncate">{retailer.address}</p>
                       </div>
                     </div>
                     <div className="col-span-1 flex items-center justify-center">

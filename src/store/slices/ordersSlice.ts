@@ -237,6 +237,32 @@ export const getOrderDetails = createAsyncThunk<Order, string, { rejectValue: st
   }
 );
 
+
+export const updateOrder = createAsyncThunk<Order, { id: string; orderData: Partial<Order> }, { rejectValue: string }>(
+  'orders/updateOrder',
+  async ({ id, orderData }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post<{ success: boolean; data: Order }>(
+        `${nodeurl}/orders/update/${id}`,
+        { orderId: id, ...orderData }
+      );
+      if (response.data.success) {
+        return response.data.data;
+      }
+      return rejectWithValue('Failed to update order: Invalid response format');
+    } catch (error) {
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { data?: { message?: string } }, message?: string };
+        return rejectWithValue(
+          axiosError.response?.data?.message || axiosError.message || 'Failed to update order'
+        );
+      }
+      return rejectWithValue('An unknown error occurred while updating retailer');
+    }
+  }
+);
+
+
 export const updateOrderStatus = createAsyncThunk<Order, { id: string; status: string }, { rejectValue: string }>(
   'orders/updateOrderStatus',
   async ({ id, status }, { rejectWithValue }) => {
@@ -331,6 +357,25 @@ const ordersSlice = createSlice({
       state.error = action.payload || 'Failed to fetch order details';
     });
 
+    // update order
+    builder.addCase(updateOrder.pending, (state) => {
+      state.status = 'loading';
+    });
+    builder.addCase(updateOrder.fulfilled, (state, action) => {
+      state.status = 'succeeded';
+      const index = state.orders.findIndex(order => order._id === action.payload._id);
+      if (index !== -1) {
+        state.orders[index] = action.payload;
+      }
+      if (state.order?._id === action.payload._id) {
+        state.order = action.payload;
+      }
+    });
+    builder.addCase(updateOrder.rejected, (state, action) => {
+      state.status = 'failed';
+      state.error = action.payload || 'Failed to update order';
+    });
+    
     // Update Order Status
     builder.addCase(updateOrderStatus.pending, (state) => {
       state.status = 'loading';
