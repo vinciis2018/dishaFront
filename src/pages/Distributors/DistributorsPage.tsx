@@ -23,6 +23,8 @@ export function DistributorsPage() {
     pagination 
   } = useAppSelector((state: RootState) => state.distributors);
 
+  const { user } = useAppSelector((state: RootState) => state.auth);
+
   // Debounced search
   const debouncedSearch = useDebouncedCallback(
     (search: string) => {
@@ -89,55 +91,81 @@ export function DistributorsPage() {
 
   return (
     <FullLayout>
-      <div className="p-4 bg-[var(--background-alt)]">
-        <div className="sm:flex sm:items-center">
-          <div className="sm:flex-auto">
-            <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Distributors</h1>
-            <p className="mt-2 text-sm text-[var(--text-secondary)]">
-              A list of all the distributors in your account including their name, location, and type.
-            </p>
+      <div className="h-auto">
+        <div className="bg-white px-4 py-2">
+          <div className="">
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => navigate(-1)}
+                className="flex items-center text-sm font-medium hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+              >
+                <span className="rounded-full bg-gray-100 p-2 mr-1">
+                  <i className="fi fi-rr-arrow-left flex items-center" />
+                </span>
+                <span className="text-lg font-semibold">
+                  Distributors
+                </span>
+              </button>
+              <div className="flex gap-2 items-center">
+                {user?.role === "admin" && (
+                  <span className="rounded-full bg-gray-100 p-2 cursor-pointer" onClick={() => setIsFormOpen(true)}>
+                    <i className="fi fi-sr-plus text-gray-500 flex items-center" />
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
-          <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+
+          {/* Search and filter */}
+          <div className="my-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="relative flex-1 max-w-md">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i className="fi fi-rr-search h-4 w-4 flex items-center text-[var(--text-secondary)]" aria-hidden="true" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search retailers..."
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  className="block w-full pl-10 pr-10 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-secondary)] text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent sm:text-sm"
+                />
+                {searchTerm && (
+                  <button
+                    title="Clear search"
+                    type="button"
+                    onClick={() => {
+                      setSearchTerm('');
+                      setCurrentPage(1);
+                      dispatch(getAllDistributors({ page: 1, limit: itemsPerPage }));
+                    }}
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                  >
+                    <i className="fi fi-rr-xmark h-4 w-4 flex items-center text-[var(--text-secondary)]" aria-hidden="true" />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => setIsFormOpen(true)}
-              className="inline-flex items-center justify-center gap-2 rounded-md border border-transparent bg-violet px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)]"
+              onClick={() => {}}
+              className="inline-flex items-center justify-center gap-1 rounded-xl border border-gray-200 bg-transparent px-2 py-2 text-sm font-medium text-[var(--text-primary)] shadow-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)]"
             >
-              <i className="fi fi-rr-plus h-4 w-4 flex items-center" />
-              Add distributor
+              All
+              <i className="fi fi-rr-angle-small-down h-4 w-4 flex items-center" />
             </button>
-          </div>
-        </div>
-
-        {/* Search and filter */}
-        <div className="mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="relative flex-1 max-w-md">
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <i className="fi fi-rr-search h-4 w-4 flex items-center text-[var(--text-secondary)]" aria-hidden="true" />
-              </div>
-              <input
-                type="text"
-                placeholder="Search distributors..."
-                value={searchTerm}
-                onChange={handleSearchChange}
-                className="block w-full pl-10 pr-10 py-2 border border-[var(--border-color)] rounded-md bg-[var(--bg-secondary)] text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent sm:text-sm"
-              />
-              {searchTerm && (
-                <button
-                  title="Clear search"
-                  type="button"
-                  onClick={() => {
-                    setSearchTerm('');
-                    setCurrentPage(1);
-                    dispatch(getAllDistributors({ page: 1, limit: itemsPerPage }));
-                  }}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-                >
-                  <i className="fi fi-rr-xmark h-4 w-4 flex items-center text-[var(--text-secondary)]" aria-hidden="true" />
-                </button>
-              )}
-            </div>
+            <button
+              type="button"
+              onClick={() => {}}
+              className="inline-flex items-center justify-center gap-1 rounded-xl border border-gray-200 bg-transparent px-2 py-2 text-sm font-medium text-[var(--text-primary)] shadow-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)]"
+            >
+              Category
+              <i className="fi fi-rr-angle-small-down h-4 w-4 flex items-center" />
+            </button>
           </div>
         </div>
 
@@ -194,13 +222,13 @@ export function DistributorsPage() {
             </div>
           </div>
         ) : (
-          <div className="mt-8">
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="p-2">
+            <div className="">
               {distributors.map((distributor) => (
                 <div
                   key={distributor._id}
                   onClick={() => navigate(`/distributors/${distributor._id}`)}
-                  className="bg-[var(--bg-secondary)] overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-200 cursor-pointer border border-[var(--border-color)]"
+                  className="my-1 p-2 bg-white overflow-hidden shadow rounded-2xl hover:shadow-md transition-shadow duration-200 cursor-pointer border border-[var(--border-color)]"
                 >
                   <div className="p-5">
                     <div className="flex items-center">

@@ -92,6 +92,7 @@ interface FetchRetailersParams {
   page?: number;
   limit?: number;
   search?: string;
+  rte?: string | null;
 }
 
 export const getAllRetailers = createAsyncThunk<
@@ -102,7 +103,7 @@ export const getAllRetailers = createAsyncThunk<
   'retailers/fetchAllRetailers',
   async (params = {}, { rejectWithValue }) => {
     try {
-      const { page = 1, limit = 10, search = '' } = params;
+      const { rte = null, page = 1, limit = 10, search = '' } = params;
       const response = await axios.get<{
         success: boolean;
         count: number;
@@ -113,6 +114,7 @@ export const getAllRetailers = createAsyncThunk<
         params: {
           page,
           limit,
+          rte,
           ...(search && { search })
         }
       });
@@ -140,6 +142,7 @@ export const getAllRetailers = createAsyncThunk<
     }
   }
 );
+
 
 export const getRetailerDetails = createAsyncThunk<Retailer, string, { rejectValue: string }>(
   'retailers/getRetailerDetails',

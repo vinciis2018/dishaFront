@@ -14,13 +14,14 @@ export interface UserRegistrationFormData {
   avatar?: string,
   password?: string,
   confirmPassword?: string,
+  role: string,
 }
 
 export interface User {
   _id?: string;
   username: string;
   email: string;
-  role: 'retailer' | 'distributor' | 'admin' | 'default';
+  role: 'retailer' | 'distributor' | 'admin' | 'default' | 'rte';
   retailerDetails?: {
     _id: string;
     name: string;
@@ -104,6 +105,7 @@ export interface ProductFormData {
 export interface Retailer {
   _id: string;
   name: string;
+  images?: string[];
   email?: string;
   phone?: string;
   address: string;
@@ -111,14 +113,23 @@ export interface Retailer {
   state: string;
   country: string;
   zipCode: string;
+  latitude: string;
+  longitude: string;
   gst?: string;
   pan?: string;
+  ownerId?: string;
+  ownerName?: string;
+  ownerEmail?: string;
   createdAt?: string;
   updatedAt?: string;
+  createdBy?: string;
+  ordersPlaced?: Order[];
+
 }
 
 export interface RetailerFormData {
   name: string;
+  images: string[];
   email?: string;
   phone?: string;
   address: string;
@@ -126,8 +137,14 @@ export interface RetailerFormData {
   state: string;
   country: string;
   zipCode: string;
+  latitude: string;
+  longitude: string;
   gst?: string;
   pan?: string;
+  ownerId?: string;
+  ownerName?: string;
+  ownerEmail?: string;
+  createdBy?: string;
 }
 
 export interface Order {
@@ -176,6 +193,9 @@ export interface Distributor {
   pan?: string;
   phone?: string;
   email?: string;
+  ownerId?: string,
+  ownerName?: string,
+  ownerEmail?: string,
 }
 
 
@@ -195,7 +215,9 @@ export interface DistributorFormData {
   pan?: string;
   phone?: string;
   email?: string;
-  owner?: User | null;
+  ownerId?: string,
+  ownerName?: string,
+  ownerEmail?: string,
 }
 
 

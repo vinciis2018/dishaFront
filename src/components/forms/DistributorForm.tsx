@@ -18,6 +18,10 @@ export function DistributorForm({ isOpen, onClose, onSubmit, isLoading, initialD
   
   const { products } = useAppSelector((state) => state.products);
   const { users } = useAppSelector((state) => state.users);
+  
+  // Filter users to only include those with distributor role
+  const distributors = users.filter(user => user.role === 'distributor');
+  
 
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
   const [selectedOwner, setSelectedOwner] = useState<User | null>(null);
@@ -33,7 +37,9 @@ export function DistributorForm({ isOpen, onClose, onSubmit, isLoading, initialD
     zipCode: '',
     products: [],
     ordersRecieved: [],
-    owner: null
+    ownerId: '',
+    ownerName: '',
+    ownerEmail: '',
   }
 
   const [formData, setFormData] = useState<DistributorFormData>(() => ({
@@ -206,13 +212,15 @@ export function DistributorForm({ isOpen, onClose, onSubmit, isLoading, initialD
 
   const handleUserSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const userId = e.target.value;
-    const user = users.find(d => d._id === userId);
+    const user = distributors.find(d => d._id === userId);
     console.log(user);
-    if (user && !formData.owner) {
+    if (user && !formData?.ownerId) {
 
       setFormData(prev => ({
         ...prev,
-        owner: user
+        ownerId: user._id,
+        ownerName: user.username,
+        ownerEmail: user.email,
       }));
 
       // Update selectedProducts for display
@@ -511,7 +519,7 @@ export function DistributorForm({ isOpen, onClose, onSubmit, isLoading, initialD
                       disabled={isLoading}
                     >
                       <option value="">Select a owner</option>
-                      {users.map((user, index) => (
+                      {distributors.map((user, index) => (
                         <option key={index} value={user._id}>
                           {user.username}
                         </option>

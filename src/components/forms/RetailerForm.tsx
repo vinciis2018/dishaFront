@@ -1,38 +1,54 @@
 import { useEffect, useState } from 'react';
 import { getS3Url } from '../../utilities/awsUtils';
-import type { DistributorFormData, Product } from '../../types';
+import type { RetailerFormData } from '../../types';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { getAllProducts } from '../../store/slices/productsSlice';
+import { getAllUsers } from '../../store/slices/usersSlice';
 
-interface DistributorFormProps {
+interface RetailerFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (distributor: DistributorFormData) => void;
+  onSubmit: (retailer: RetailerFormData) => void;
   isLoading?: boolean;
-  initialData?: DistributorFormData;
+  initialData?: RetailerFormData;
 }
 
-export function DistributorForm({ isOpen, onClose, onSubmit, isLoading, initialData }: DistributorFormProps) {
+export function RetailerForm({ isOpen, onClose, onSubmit, isLoading, initialData }: RetailerFormProps) {
   const dispatch = useAppDispatch();
+
+  const { user } = useAppSelector((state) => state.auth);
+  const { users } = useAppSelector((state) => state.users);
   
-  const { products } = useAppSelector((state) => state.products);
-  const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
+  // Filter users to only include those with retailer role
+  const retailers = users.filter(user => user.role === 'retailer');
   
-  const defaultFormData: DistributorFormData = {
+  useEffect(() => {
+    // Fetch all users when the component mounts
+    dispatch(getAllUsers());
+  }, [dispatch]);
+  
+  const defaultFormData: RetailerFormData = {
     name: '',
     images: [],
+    email: '',
+    phone: '',
     address: '',
-    latitude: '',
-    longitude: '',
     city: '',
     state: '',
-    country: '',
+    country: 'India',
     zipCode: '',
-    products: [],
-    ordersRecieved: [],
+    latitude: '',
+    longitude: '',
+    gst: '',
+    pan: '',
+    ownerId: '',
+    ownerName: '',
+    ownerEmail: '',
+    createdBy: user?._id,
+    
   }
 
-  const [formData, setFormData] = useState<DistributorFormData>(() => ({
+  const [formData, setFormData] = useState<RetailerFormData>(() => ({
     ...defaultFormData,
     ...initialData,
   }));
@@ -41,34 +57,38 @@ export function DistributorForm({ isOpen, onClose, onSubmit, isLoading, initialD
   const [localFiles, setLocalFiles] = useState<File[]>([]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const files = Array.from(e.target.files);
-      const imageUrls = files.map(file => URL.createObjectURL(file));
-      setFormData(prev => ({
-        ...prev,
-        siteImages: [...prev.images, ...imageUrls]
-      }));
-      // Track the actual File objects so we can upload them later
-      setLocalFiles(prev => [...prev, ...files]);
+    if (e?.target?.files) {
+      const files = Array.from(e?.target?.files ?? []);
+      if (files.length > 0) {
+        
+        const imageUrls = files.map(file => URL.createObjectURL(file));
+        setFormData(prev => ({
+          ...prev,
+          images: [...prev.images, ...imageUrls]
+        }));
+        // Track the actual File objects so we can upload them later
+        setLocalFiles(prev => [...prev, ...files]);
+      }
+
     }
   };
 
   const removeImage = (index: number) => {
     // Revoke blob preview URL to free memory
-    const toRemove = formData.images[index];
+    const toRemove = formData.images?.[index];
     if (typeof toRemove === 'string' && toRemove.startsWith('blob:')) {
       try { URL.revokeObjectURL(toRemove); } catch { void 0; }
     }
     setFormData(prev => ({
       ...prev,
-      siteImages: prev.images.filter((_, i) => i !== index)
+      images: prev.images?.filter((_, i) => i !== index)
     }));
 
     // If the removed preview was a blob URL, also remove the corresponding File from localFiles.
     // Determine its position among blob previews up to this index.
     setLocalFiles(prevFiles => {
       const imgs = formData.images;
-      const isBlobAtIndex = typeof imgs[index] === 'string' && imgs[index].startsWith('blob:');
+      const isBlobAtIndex = typeof imgs?.[index] === 'string' && imgs?.[index].startsWith('blob:');
       if (!isBlobAtIndex) return prevFiles; // do not alter for existing http/https URLs
 
       // Count how many blob items existed before this index to map to localFiles position
@@ -97,18 +117,18 @@ export function DistributorForm({ isOpen, onClose, onSubmit, isLoading, initialD
     console.log(formData);
     try {
       // Filter out any existing S3 URLs (already uploaded)
-      const existingUrls = formData.images.filter(url => 
+      const existingUrls = formData.images?.filter(url => 
         typeof url === 'string' && (url.startsWith('http') || url.startsWith('https'))
       );
       
       // Get only the new items (blob previews or data URLs)
-      const newItems = formData.images.filter(url => 
+      const newItems = formData.images?.filter(url => 
         typeof url !== 'string' || !(url.startsWith('http') || url.startsWith('https'))
       );
       
       // Upload new files to S3; for blob previews, prefer the real File from localFiles in order.
       let blobPointer = 0;
-      const uploadPromises = newItems.map(async (item) => {
+      const uploadPromises = newItems?.map(async (item) => {
         // If item is a string blob/data URL, upload corresponding File from localFiles
         if (typeof item === 'string') {
           if (item.startsWith('blob:')) {
@@ -161,7 +181,7 @@ export function DistributorForm({ isOpen, onClose, onSubmit, isLoading, initialD
       // Reset form after successful submission if not in edit mode
       if (!initialData) {
         // Revoke any remaining blob previews
-        formData.images.forEach(u => {
+        formData?.images?.forEach(u => {
           if (typeof u === 'string' && u.startsWith('blob:')) {
             try { URL.revokeObjectURL(u); } catch { void 0; }
           }
@@ -176,41 +196,16 @@ export function DistributorForm({ isOpen, onClose, onSubmit, isLoading, initialD
     }
   };
 
-  const removeProduct = (productId: string) => {
-    setFormData(prev => ({
-      ...prev,
-      sites: prev.products.filter(product => product._id !== productId)
-    }));
-    setSelectedProducts(prev => prev.filter(product => product._id !== productId));
-  };
-
-  const handleSiteSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const productId = e.target.value;
-    const product = products.find(d => d._id === productId);
-    console.log(product);
-    if (product && !formData.products.some(d => d._id === product._id)) {
-
-      setFormData(prev => ({
-        ...prev,
-        products: [...prev.products, {...product, productId: product._id}]
-      }));
-
-      // Update selectedProducts for display
-      setSelectedProducts(prev => [...prev, product]);
-    }
-  };
-
+  
 
   useEffect(() => {
     if (initialData) {
       setFormData(initialData);
-      setSelectedProducts(products.filter(p => initialData?.products?.some(product => product._id === p._id)));
     } else {
       setFormData(prev => ({
         ...prev,
         products: []
       }));
-      setSelectedProducts([]);
     }
     dispatch(getAllProducts());
   }, [initialData]);
@@ -218,31 +213,31 @@ export function DistributorForm({ isOpen, onClose, onSubmit, isLoading, initialD
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 p-4 overflow-y-auto py-8">
-      <div className="bg-white dark:bg-black rounded-lg shadow-xl w-full max-w-md my-8">
-        <div className="p-6 max-h-[calc(100vh-8rem)] overflow-y-auto">
-          <div className="flex items-center justify-between mb-6 sticky top-0 bg-[var(--background)] pt-4 pb-2 -mt-4 -mx-6 px-6 border-b border-[var(--border)]">
-            <h3 className="text-xl font-semibold text-[var(--text)]">Create New Distributor</h3>
-            <button
-              type="button"
-              onClick={onClose}
-              className="text-gray-500 hover:text-gray-700"
-              disabled={isLoading}
-              aria-label="Close modal"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 overflow-y-auto py-4">
+      <div className="bg-white dark:bg-black rounded-lg shadow-xl w-full max-w-md my-auto mx-4 max-h-[50vh] flex flex-col">
+        <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-[var(--border)]">
+          <h3 className="text-xl font-semibold text-[var(--text)]">Create New Retailer</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+            disabled={isLoading}
+            aria-label="Close modal"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="p-6 overflow-y-auto flex-1">
 
           <div className="">
             <form id="site-form" onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-4">
-                {/* Distributor Name */}
+                {/* Retailer Name */}
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-[var(--text-muted)] mb-1">
-                    Distributor Name *
+                    Shop Name *
                   </label>
                   <input
                     type="text"
@@ -256,10 +251,119 @@ export function DistributorForm({ isOpen, onClose, onSubmit, isLoading, initialD
                   />
                 </div>
 
-                {/* Distributor Images */}
+                {/* Contact Information */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-[var(--text-muted)] mb-1">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      value={formData.email || ''}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent bg-[var(--background-alt)] text-[var(--text)]"
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="phone" className="block text-sm font-medium text-[var(--text-muted)] mb-1">
+                      Phone Number
+                    </label>
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      value={formData.phone || ''}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent bg-[var(--background-alt)] text-[var(--text)]"
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+
+                {/* Tax Information */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="gst" className="block text-sm font-medium text-[var(--text-muted)] mb-1">
+                      GST Number
+                    </label>
+                    <input
+                      type="text"
+                      id="gst"
+                      name="gst"
+                      value={formData.gst || ''}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent bg-[var(--background-alt)] text-[var(--text)] uppercase"
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="pan" className="block text-sm font-medium text-[var(--text-muted)] mb-1">
+                      PAN Number
+                    </label>
+                    <input
+                      type="text"
+                      id="pan"
+                      name="pan"
+                      value={formData.pan || ''}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent bg-[var(--background-alt)] text-[var(--text)] uppercase"
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+
+                {/* Retailer Selection */}
+                <div className="space-y-4 p-4 border border-[var(--border)] rounded-md">
+                  <h4 className="text-sm font-medium text-[var(--text-muted)]">Retailer Information</h4>
+                  <div>
+                    <label htmlFor="retailerSelect" className="block text-sm font-medium text-[var(--text-muted)] mb-1">
+                      Select Retailer
+                    </label>
+                    <select
+                      id="retailerSelect"
+                      value={formData.ownerId || ''}
+                      onChange={(e) => {
+                        const selectedRetailer = retailers.find(r => r._id === e.target.value);
+                        setFormData(prev => ({
+                          ...prev,
+                          ownerId: selectedRetailer?._id || '',
+                          ownerName: selectedRetailer?.username || '',
+                          ownerEmail: selectedRetailer?.email || ''
+                        }));
+                      }}
+                      className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent bg-[var(--background-alt)] text-[var(--text)]"
+                      disabled={isLoading}
+                    >
+                      <option value="">Select a retailer</option>
+                      {retailers.map((retailer) => (
+                        <option key={retailer._id} value={retailer._id}>
+                          {retailer.username} - {retailer.email}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  {/* Display selected retailer info */}
+                  {formData.ownerId && (
+                    <div className="mt-4 p-3 bg-[var(--background-alt)] rounded-md border border-[var(--border)]">
+                      <h5 className="text-sm font-medium text-[var(--text-muted)] mb-2">Selected Retailer</h5>
+                      <p className="text-sm">
+                        <span className="font-medium">Name:</span> {formData.ownerName}
+                      </p>
+                      <p className="text-sm">
+                        <span className="font-medium">Email:</span> {formData.ownerEmail}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Retailer Images */}
                 <div>
                   <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">
-                    Distributor Images
+                    Retailer Images
                   </label>
                   <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed border-[var(--border)] rounded-md">
                     <div className="space-y-1 text-center">
@@ -303,13 +407,13 @@ export function DistributorForm({ isOpen, onClose, onSubmit, isLoading, initialD
                   </div>
                   
                   {/* Preview Uploaded Images */}
-                  {formData.images.length > 0 && (
+                  {formData?.images && formData?.images?.length > 0 && (
                     <div className="mt-4">
                       <h4 className="text-sm font-medium text-[var(--text-muted)] mb-2">
                         Selected Images
                       </h4>
                       <div className="grid grid-cols-3 gap-2">
-                        {formData.images.map((image, index) => (
+                        {formData?.images?.map((image, index) => (
                           <div key={index} className="relative group">
                             <img
                               src={image}
@@ -334,11 +438,11 @@ export function DistributorForm({ isOpen, onClose, onSubmit, isLoading, initialD
                   )}
                 </div>
 
-                {/* Details Section */}
+                {/* Address Section */}
                 <div className="space-y-4 p-4 border border-[var(--border)] rounded-md">
                   <h4 className="text-sm font-medium text-[var(--text-muted)]">Location Details</h4>
                   
-                  {/* Formula */}
+                  {/* address */}
                   <div>
                     <label htmlFor="address" className="block text-sm font-medium text-[var(--text-muted)] mb-1">
                       Address *
@@ -426,85 +530,73 @@ export function DistributorForm({ isOpen, onClose, onSubmit, isLoading, initialD
                       disabled={isLoading}
                     />
                   </div>
-                </div>
 
-                <div>
-                  <label htmlFor="sites" className="block text-sm font-medium text-[var(--text-muted)] mb-1">
-                    Sites *
-                  </label>
-                  <div className="space-y-2">
-                    <select
-                      title="Select a site"
-                      id="sites"
-                      name="sites"
-                      value=""
-                      onChange={handleSiteSelect}
-                      className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent bg-[var(--background-alt)] text-[var(--text)]"
-                      disabled={isLoading}
-                    >
-                      <option value="">Select a site</option>
-                      {products.map((product, index) => (
-                        <option key={index} value={product._id}>
-                          {product.name}
-                        </option>
-                      ))}
-                    </select>
-                    
-                    {selectedProducts.length > 0 && (
-                      <div className="mt-2">
-                        <p className="text-sm text-[var(--text-muted)] mb-1">Selected Products:</p>
-                        <div className="flex flex-wrap gap-2">
-                          {selectedProducts.map(product => (
-                            <span key={product._id} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[var(--primary)] text-[var(--text)]">
-                              {product.name}
-                              <button 
-                                type="button"
-                                onClick={() => removeProduct(product._id)}
-                                className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30"
-                                aria-label={`Remove ${product.name}`}
-                              >
-                                ×
-                              </button>
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                  {/* Location */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="latitude" className="block text-sm font-medium text-[var(--text-muted)] mb-1">
+                        Latitude
+                      </label>
+                      <input
+                        type="text"
+                        id="latitude"
+                        name="latitude"
+                        value={formData.latitude}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent bg-[var(--background-alt)] text-[var(--text)]"
+                        disabled={isLoading}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="longitude" className="block text-sm font-medium text-[var(--text-muted)] mb-1">
+                        Longitude
+                      </label>
+                      <input
+                        type="text"
+                        id="longitude"
+                        name="longitude"
+                        value={formData.longitude}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent bg-[var(--background-alt)] text-[var(--text)]"
+                        disabled={isLoading}
+                      />
+                    </div>
                   </div>
                 </div>
 
               </div>
             </form>
           </div>
-          
           {/* Form Footer */}
-          <div className="sticky bottom-0 bg-[var(--background)] border-t border-[var(--border)] mt-6 flex justify-end space-x-3 px-6 py-4">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isLoading}
-              className="px-4 py-2 text-sm font-medium text-[var(--text-muted)] hover:text-[var(--text)] disabled:opacity-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              form="site-form"
-              disabled={isLoading}
-              className="px-4 py-2 text-sm font-medium text-[var(--text)] bg-[var(--primary)] rounded-md hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-            >
-              {isLoading ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-[var(--text)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Saving...
-                </>
-              ) : (
-                'Save Distributor'
-              )}
-            </button>
+          <div className="sticky bottom-0 bg-[var(--background)] border-t border-[var(--border)] mt-6 -mx-6 px-6 py-4">
+            <div className="flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={isLoading}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="site-form"
+                disabled={isLoading}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 flex items-center space-x-2"
+              >
+                {isLoading ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Saving...
+                  </>
+                ) : (
+                  'Save Retailer'
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>

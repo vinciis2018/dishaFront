@@ -38,23 +38,26 @@ export function MyCartPage() {
       ...product,
     }));
 
-    dispatch(createOrder({
-      userId: user?._id || "",
-      username: user?.username || "",
-      totalAmount: 0,
-      paymentMethod: "",
-      deliveryAddress: {
-        address: "",
-        state: "",
-        city: "",
-        street: "",
-        pincode: "",
-      },
-      products: products,
-      retailerId: user?._id || "",
-      retailerName: user?.username || "",
-      retailerEmail: user?.email || "",
-    }))
+    if (user?.role == "retailer") {
+      dispatch(createOrder({
+        userId: user?._id || "",
+        username: user?.username || "",
+        totalAmount: 0,
+        paymentMethod: "",
+        deliveryAddress: {
+          address: "",
+          state: "",
+          city: "",
+          street: "",
+          pincode: "",
+        },
+        products: products,
+        retailerId: user?._id || "",
+        retailerName: user?.username || "",
+        retailerEmail: user?.email || "",
+      }))
+    }
+    
   };
   
   useEffect(() => {
@@ -68,6 +71,7 @@ export function MyCartPage() {
 
 
   const Footer = () => {
+    if (Object.keys(cart).length === 0) return null;
     return (
       <div className="bg-green2 flex justify-between items-center p-4 rounded-t-2xl">
          <div className="">

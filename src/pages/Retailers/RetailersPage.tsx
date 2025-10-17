@@ -6,6 +6,7 @@ import type { RetailerFormData } from '../../types';
 import type { RootState } from '../../store';
 import { useNavigate } from 'react-router-dom';
 import { useDebouncedCallback } from 'use-debounce';
+import { RetailerForm } from '../../components/forms/RetailerForm';
 
 export function RetailersPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -21,6 +22,8 @@ export function RetailersPage() {
     error, 
     pagination 
   } = useAppSelector((state: RootState) => state.retailers);
+
+  const { user } = useAppSelector((state: RootState) => state.auth);
 
   // Debounced search
   const debouncedSearch = useDebouncedCallback(
@@ -41,7 +44,8 @@ export function RetailersPage() {
   // Handle page change
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    dispatch(getAllRetailers({ 
+    dispatch(getAllRetailers({
+      rte: user?.role === "rte" ? user?._id : null,
       page, 
       limit: itemsPerPage, 
       search: searchTerm 
@@ -56,8 +60,10 @@ export function RetailersPage() {
       // Close the form and refresh the retailers list
       setIsFormOpen(false);
       dispatch(getAllRetailers({ page: currentPage, limit: itemsPerPage, search: searchTerm }));
+      return true; // Return true to indicate success
     } catch (err) {
       console.error('Failed to create retailer:', err);
+      return false; // Return false to indicate failure
     }
   };
 
@@ -68,60 +74,91 @@ export function RetailersPage() {
 
   // Initial data load
   useEffect(() => {
-    dispatch(getAllRetailers({ page: currentPage, limit: itemsPerPage, search: searchTerm }));
-  }, [dispatch, currentPage, itemsPerPage, searchTerm]);
+    dispatch(getAllRetailers({
+      rte: user?.role === "rte" ? user?._id : null,
+      page: currentPage,
+      limit: itemsPerPage,
+      search: searchTerm
+    }));
+  }, [dispatch, currentPage, itemsPerPage, searchTerm, user?.role, user?._id]);
 
   return (
     <FullLayout>
-      <div className="p-4 bg-[var(--background-alt)]">
-        <div className="sm:flex sm:items-center">
-          <div className="sm:flex-auto">
-            <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Retailers</h1>
-            <p className="mt-2 text-sm text-[var(--text-secondary)]">
-              A list of all the retailers in your system including their contact information and location.
-            </p>
+      <div className="h-auto">
+        <div className="bg-white px-4 py-2">
+          <div className="">
+            <div className="flex items-center justify-between">
+            <button
+                onClick={() => navigate(-1)}
+                className="flex items-center text-sm font-medium hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+              >
+                <span className="rounded-full bg-gray-100 p-2 mr-1">
+                  <i className="fi fi-rr-arrow-left flex items-center" />
+                </span>
+                <span className="text-lg font-semibold">
+                  Retailers
+                </span>
+              </button>
+              <div className="flex gap-2 items-center">
+                {user?.role === "rte" && (
+                  <span className="rounded-full bg-gray-100 p-2 cursor-pointer" onClick={() => setIsFormOpen(true)}>
+                    <i className="fi fi-sr-plus text-gray-500 flex items-center" />
+                  </span>
+                )}
+                
+              </div>
+            </div>
           </div>
-          <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+
+          {/* Search and filter */}
+          <div className="my-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="relative flex-1 max-w-md">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i className="fi fi-rr-search h-4 w-4 flex items-center text-[var(--text-secondary)]" aria-hidden="true" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search retailers..."
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  className="block w-full pl-10 pr-10 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-secondary)] text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent sm:text-sm"
+                />
+                {searchTerm && (
+                  <button
+                    title="Clear search"
+                    type="button"
+                    onClick={() => {
+                      setSearchTerm('');
+                      setCurrentPage(1);
+                      dispatch(getAllRetailers({ page: 1, limit: itemsPerPage }));
+                    }}
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                  >
+                    <i className="fi fi-rr-xmark h-4 w-4 flex items-center text-[var(--text-secondary)]" aria-hidden="true" />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => setIsFormOpen(true)}
-              className="inline-flex items-center justify-center gap-2 rounded-md border border-transparent bg-violet px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)]"
+              onClick={() => {}}
+              className="inline-flex items-center justify-center gap-1 rounded-xl border border-gray-200 bg-transparent px-2 py-2 text-sm font-medium text-[var(--text-primary)] shadow-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)]"
             >
-              <i className="fi fi-rr-plus h-4 w-4 flex items-center" />
-              Add Retailer
+              All
+              <i className="fi fi-rr-angle-small-down h-4 w-4 flex items-center" />
             </button>
-          </div>
-        </div>
-
-        {/* Search and filter */}
-        <div className="mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="relative flex-1 max-w-md">
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <i className="fi fi-rr-search h-4 w-4 flex items-center text-[var(--text-secondary)]" aria-hidden="true" />
-              </div>
-              <input
-                type="text"
-                placeholder="Search retailers..."
-                value={searchTerm}
-                onChange={handleSearchChange}
-                className="block w-full pl-10 pr-10 py-2 border border-[var(--border-color)] rounded-md bg-[var(--bg-secondary)] text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent sm:text-sm"
-              />
-              {searchTerm && (
-                <button
-                  title="Clear search"
-                  type="button"
-                  onClick={() => {
-                    setSearchTerm('');
-                    setCurrentPage(1);
-                    dispatch(getAllRetailers({ page: 1, limit: itemsPerPage }));
-                  }}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-                >
-                  <i className="fi fi-rr-xmark h-4 w-4 flex items-center text-[var(--text-secondary)]" aria-hidden="true" />
-                </button>
-              )}
-            </div>
+            <button
+              type="button"
+              onClick={() => {}}
+              className="inline-flex items-center justify-center gap-1 rounded-xl border border-gray-200 bg-transparent px-2 py-2 text-sm font-medium text-[var(--text-primary)] shadow-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)]"
+            >
+              Category
+              <i className="fi fi-rr-angle-small-down h-4 w-4 flex items-center" />
+            </button>
           </div>
         </div>
 
@@ -178,58 +215,39 @@ export function RetailersPage() {
             </div>
           </div>
         ) : (
-          <div className="mt-8">
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="p-2">
+            <div className="">
               {retailers.map((retailer) => (
                 <div
                   key={retailer._id}
-                  onClick={() => navigate(`/retailers/${retailer._id}`)}
-                  className="bg-white overflow-hidden shadow rounded-lg border border-[var(--border-color)] hover:shadow-md transition-shadow duration-200 cursor-pointer"
+                  
+                  className="my-1 p-2 bg-white overflow-hidden shadow rounded-2xl hover:shadow-md transition-shadow duration-200 cursor-pointer border border-[var(--border-color)]"
                 >
-                  <div className="px-4 py-5 sm:p-6">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 bg-[var(--color-primary)] rounded-md p-3">
-                        <i className="fi fi-rr-store h-6 w-6 text-white" />
-                      </div>
-                      <div className="ml-5 w-0 flex-1">
-                        <h3 className="text-lg font-medium text-[var(--text-primary)] truncate">
-                          {retailer.name}
-                        </h3>
-                        <p className="mt-1 text-sm text-[var(--text-secondary)] truncate">
-                          {retailer.email}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="mt-4">
-                      <div className="flex items-center text-sm text-[var(--text-secondary)]">
-                        <i className="fi fi-rr-phone-call h-4 w-4 mr-2" />
-                        <span>{retailer.phone}</span>
-                      </div>
-                      <div className="mt-2 flex items-start text-sm text-[var(--text-secondary)]">
-                        <i className="fi fi-rr-marker h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
-                        <span className="line-clamp-2">
-                          {[retailer.address, retailer.city, retailer.state, retailer.country, retailer.zipCode]
-                            .filter(Boolean)
-                            .join(', ')}
-                        </span>
-                      </div>
-                      {retailer.gst && (
-                        <div className="mt-2 flex items-center text-sm text-[var(--text-secondary)]">
-                          <i className="fi fi-rr-document h-4 w-4 mr-2" />
-                          <span>GST: {retailer.gst}</span>
+                  <div className="p-2 grid grid-cols-12 gap-2 h-full border-b border-dotted" onClick={() => navigate(`/retailers/${retailer._id}`)}>
+                    <div className="col-span-3 h-full">
+                      {retailer?.images && retailer?.images?.length > 0 && (
+                        <div className="h-full flex items-center bg-gray-200 rounded-xl ">
+                          <img className="h-full rounded-md" src={retailer.images[0]} alt="product" />
                         </div>
                       )}
                     </div>
-                  </div>
-                  <div className="bg-[var(--bg-secondary)] px-4 py-4 sm:px-6">
-                    <div className="text-sm">
-                      <a
-                        href={`/retailers/${retailer._id}`}
-                        className="font-medium text-[var(--color-primary)] hover:text-opacity-80"
-                      >
-                        View details<span className="sr-only">, {retailer.name}</span>
-                      </a>
+                    <div className="col-span-8" >
+                      <div className="truncate pb-1">
+                        <h3 className="text-md font-semibold text-[var(--text-primary)]">{retailer.name}</h3>
+                        <p className="text-xs text-gray-500 truncate">Owner: {retailer.ownerName}</p>
+                      </div>
+                      <div className="flex items-center gap-2 pt-1">
+                        <i className="fi fi-rr-marker flex items-center text-md text-violet"></i>
+                        <p className="text-sm text-gray-500">{retailer.address}</p>
+                      </div>
                     </div>
+                    <div className="col-span-1 flex items-center justify-center">
+                      <i className="fi fi-rr-angle-right flex items-center text-md text-violet"></i>
+                    </div>
+                  </div>
+                  <div className="p-2 flex items-center gap-2">
+                      <i className="fi fi-rr-shopping-cart flex items-center text-md text-violet"></i>
+                      <p className="text-sm text-gray-500">{retailer.ordersPlaced?.length || 0} orders placed</p>
                   </div>
                 </div>
               ))}
@@ -317,209 +335,12 @@ export function RetailersPage() {
       </div>
 
       {/* Create Retailer Form Modal */}
-      {isFormOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="px-6 py-4 border-b border-[var(--border-color)] flex justify-between items-center">
-              <h3 className="text-lg font-medium text-[var(--text-primary)]">Add New Retailer</h3>
-              <button
-                title="Close"
-                type="button"
-                onClick={() => setIsFormOpen(false)}
-                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-              >
-                <i className="fi fi-rr-cross h-5 w-5" />
-              </button>
-            </div>
-            <div className="p-6">
-              <form onSubmit={(e) => {
-                e.preventDefault();
-                const formData = new FormData(e.currentTarget);
-                const retailerData: RetailerFormData = {
-                  name: formData.get('name') as string,
-                  email: formData.get('email') as string,
-                  phone: formData.get('phone') as string,
-                  address: formData.get('address') as string,
-                  city: formData.get('city') as string,
-                  state: formData.get('state') as string,
-                  country: formData.get('country') as string,
-                  zipCode: formData.get('pincode') as string,
-                  gst: formData.get('gstNumber') as string || undefined,
-                  pan: formData.get('panNumber') as string || undefined,
-                };
-                handleCreateRetailer(retailerData);
-              }}>
-                <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                  <div className="sm:col-span-3">
-                    <label htmlFor="name" className="block text-sm font-medium text-[var(--text-primary)]">
-                      Retailer Name <span className="text-red-500">*</span>
-                    </label>
-                    <div className="mt-1">
-                      <input
-                        type="text"
-                        name="name"
-                        id="name"
-                        required
-                        className="block w-full rounded-md border-[var(--border-color)] shadow-sm focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)] sm:text-sm"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="sm:col-span-3">
-                    <label htmlFor="email" className="block text-sm font-medium text-[var(--text-primary)]">
-                      Email <span className="text-red-500">*</span>
-                    </label>
-                    <div className="mt-1">
-                      <input
-                        type="email"
-                        name="email"
-                        id="email"
-                        required
-                        className="block w-full rounded-md border-[var(--border-color)] shadow-sm focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)] sm:text-sm"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="sm:col-span-3">
-                    <label htmlFor="phone" className="block text-sm font-medium text-[var(--text-primary)]">
-                      Phone Number <span className="text-red-500">*</span>
-                    </label>
-                    <div className="mt-1">
-                      <input
-                        type="tel"
-                        name="phone"
-                        id="phone"
-                        required
-                        className="block w-full rounded-md border-[var(--border-color)] shadow-sm focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)] sm:text-sm"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="sm:col-span-3">
-                    <label htmlFor="gstNumber" className="block text-sm font-medium text-[var(--text-primary)]">
-                      GST Number
-                    </label>
-                    <div className="mt-1">
-                      <input
-                        type="text"
-                        name="gstNumber"
-                        id="gstNumber"
-                        className="block w-full rounded-md border-[var(--border-color)] shadow-sm focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)] sm:text-sm"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="sm:col-span-6">
-                    <label htmlFor="address" className="block text-sm font-medium text-[var(--text-primary)]">
-                      Address <span className="text-red-500">*</span>
-                    </label>
-                    <div className="mt-1">
-                      <input
-                        type="text"
-                        name="address"
-                        id="address"
-                        required
-                        className="block w-full rounded-md border-[var(--border-color)] shadow-sm focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)] sm:text-sm"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="sm:col-span-2">
-                    <label htmlFor="city" className="block text-sm font-medium text-[var(--text-primary)]">
-                      City <span className="text-red-500">*</span>
-                    </label>
-                    <div className="mt-1">
-                      <input
-                        type="text"
-                        name="city"
-                        id="city"
-                        required
-                        className="block w-full rounded-md border-[var(--border-color)] shadow-sm focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)] sm:text-sm"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="sm:col-span-2">
-                    <label htmlFor="state" className="block text-sm font-medium text-[var(--text-primary)]">
-                      State <span className="text-red-500">*</span>
-                    </label>
-                    <div className="mt-1">
-                      <input
-                        type="text"
-                        name="state"
-                        id="state"
-                        required
-                        className="block w-full rounded-md border-[var(--border-color)] shadow-sm focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)] sm:text-sm"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="sm:col-span-2">
-                    <label htmlFor="pincode" className="block text-sm font-medium text-[var(--text-primary)]">
-                      Pincode <span className="text-red-500">*</span>
-                    </label>
-                    <div className="mt-1">
-                      <input
-                        type="text"
-                        name="pincode"
-                        id="pincode"
-                        required
-                        className="block w-full rounded-md border-[var(--border-color)] shadow-sm focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)] sm:text-sm"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="sm:col-span-3">
-                    <label htmlFor="country" className="block text-sm font-medium text-[var(--text-primary)]">
-                      Country <span className="text-red-500">*</span>
-                    </label>
-                    <div className="mt-1">
-                      <input
-                        type="text"
-                        name="country"
-                        id="country"
-                        required
-                        defaultValue="India"
-                        className="block w-full rounded-md border-[var(--border-color)] shadow-sm focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)] sm:text-sm"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="sm:col-span-3">
-                    <label htmlFor="panNumber" className="block text-sm font-medium text-[var(--text-primary)]">
-                      PAN Number
-                    </label>
-                    <div className="mt-1">
-                      <input
-                        type="text"
-                        name="panNumber"
-                        id="panNumber"
-                        className="block w-full rounded-md border-[var(--border-color)] shadow-sm focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)] sm:text-sm uppercase"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-8 flex justify-end space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => setIsFormOpen(false)}
-                    className="px-4 py-2 border border-[var(--border-color)] rounded-md shadow-sm text-sm font-medium text-[var(--text-primary)] bg-white hover:bg-[var(--bg-secondary)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)]"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[var(--color-primary)] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)]"
-                  >
-                    {status === 'loading' ? 'Saving...' : 'Save Retailer'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
+      <RetailerForm
+        isOpen={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        onSubmit={handleCreateRetailer}
+        isLoading={status === 'loading'}
+      />
     </FullLayout>
   );
 }

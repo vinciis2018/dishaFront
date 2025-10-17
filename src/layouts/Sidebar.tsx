@@ -122,7 +122,7 @@ export function Sidebar({ isOpen = false, onClose, isMobile = false, setIsOpen }
                 </li>
               )}
 
-              {user && user?.role === "admin" && (
+              {user && ["admin", "rte"].includes(user?.role) && (
                 <li>
                   <NavLink
                     to="/Retailers"

@@ -20,6 +20,7 @@ export function SignupPage() {
     username: "",
     password: "",
     confirmPassword: "",
+    role: "default",
   });
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -130,6 +131,26 @@ export function SignupPage() {
                 value={formData.confirmPassword}
                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
               />
+            </div>
+            <div>
+              <label htmlFor="role" className="block text-sm font-medium text-[var(--text-muted)] mb-1">
+                Role *
+              </label>
+              <div className="space-y-2">
+                <select
+                  title="Select a role"
+                  id="role"
+                  name="role"
+                  value=""
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                  className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent bg-[var(--background-alt)] text-[var(--text)]"
+                >
+                  <option value="default">Select a role</option>
+                  <option value="rte">RTE</option>
+                  <option value="retailer">Retailer</option>
+                  <option value="distributor">Distributor</option>
+                </select>
+              </div>
             </div>
           </div>
 
